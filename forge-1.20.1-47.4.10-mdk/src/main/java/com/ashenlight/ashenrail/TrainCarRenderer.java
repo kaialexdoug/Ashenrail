@@ -49,6 +49,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
         poseStack.translate(0.0D, 1.8D, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0f - entityYaw));
 
         EntityModel<TrainCar> model = getVariantData(trainCar).model();
 
