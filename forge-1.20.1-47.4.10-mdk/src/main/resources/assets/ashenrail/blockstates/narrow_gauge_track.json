@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=z": {
+      "model": "ashenrail:block/narrow_gauge_track"
+    },
+    "axis=x": {
+      "model": "ashenrail:block/narrow_gauge_track",
+      "y": 90
+    }
+  }
+}
