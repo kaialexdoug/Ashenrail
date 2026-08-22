@@ -63,8 +63,6 @@ public class TrainCarItem extends Item {
 
         float normalizedYaw = (rawYaw % 360.0f + 360.0f) % 360.0f;
 
-        if (player != null) player.sendSystemMessage(Component.literal("player facing " + normalizedYaw));
-
         if (trackAxis == Direction.Axis.X) {
             //track runs east / west
             return (normalizedYaw > 180.0f && normalizedYaw < 360.0f) ? 90.0f : 270.0f;
