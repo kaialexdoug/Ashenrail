@@ -27,8 +27,8 @@ public class TrainCar extends Entity {
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
 
     public TrainCar(EntityType<?> type, Level level) {
-
         super(type, level);
+        this.noPhysics = true;
     }
 
     @Override
@@ -116,8 +116,8 @@ public class TrainCar extends Entity {
 
     private Vec3 getSeatOffsetForVariant(int variant) {
         return switch(variant) {
-            case 0 -> new Vec3(0.0d, 0.3d, -1.0d);
-            default -> new Vec3(0.0d, 0.3d, 0.0d);
+            case 0 -> new Vec3(0.0d, 0.5d, -1.0d);
+            default -> new Vec3(0.0d, 0.5d, 0.0d);
         };
     }
 
@@ -127,7 +127,7 @@ public class TrainCar extends Entity {
         if (this.hasPassenger(passenger)) {
             Vec3 offset = getSeatOffsetForVariant(getVariant());
 
-            double yawRad = Math.toRadians(-this.getYRot());
+            double yawRad = Math.toRadians(this.getYRot());
             double rotatedX = offset.x * Math.cos(yawRad) - offset.z * Math.sin(yawRad);
             double rotatedZ = offset.x * Math.sin(yawRad) + offset.z * Math.cos(yawRad);
 
@@ -176,43 +176,26 @@ public class TrainCar extends Entity {
         this.setDeltaMovement(this.getDeltaMovement().multiply(0.95d, 1.0d, 0.95d));
     }
 
-//    @Override
-//    public void move(MoverType type, Vec3 pos) {
-//        if (type == MoverType.SELF) {
-//            boolean oldNoPhysics = this.noPhysics;
-//            this.noPhysics = true;
-//
-//            super.move(type, pos);
-//
-//            this.noPhysics = oldNoPhysics;
-//            return;
-//        }
-//
-//        super.move(type,pos);
-//    }
-
     @Override
     public void tick() {
         super.tick();
-
-        if (!this.level().isClientSide()) {
-            // only variant 0 (steam loco) responds to player drive inputs.
-            if (this.getVariant() == 0 && this.getFirstPassenger() instanceof Player player) {
-                float forwardInput = player.zza;
-                if (forwardInput > 0.0f) {
-                    accelerate(false);
-                } else if (forwardInput < 0.0f) {
-                    accelerate(true);
-                } else {
-                    applyCoastingFriction();
-                }
+        // only variant 0 (steam loco) responds to player drive inputs.
+        if (this.getVariant() == 0 && this.getFirstPassenger() instanceof Player player) {
+            float forwardInput = player.zza;
+            if (forwardInput > 0.0f) {
+                accelerate(false);
+            } else if (forwardInput < 0.0f) {
+                accelerate(true);
             } else {
                 applyCoastingFriction();
             }
+        } else {
+            applyCoastingFriction();
+        }
+        Vec3 movement = this.getDeltaMovement();
+        this.move(MoverType.SELF, movement);
 
-            Vec3 movement = this.getDeltaMovement();
-            this.move(MoverType.SELF, movement);
-
+        if (!this.level().isClientSide()) {
             this.hasImpulse = true;
         }
     }
