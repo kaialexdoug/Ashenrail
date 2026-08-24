@@ -36,7 +36,6 @@ public class TrainCarItem extends Item {
                         : Direction.Axis.Z;
 
                 float finalYaw = getFinalYaw(context, player, trackAxis);
-                System.out.println("the final yaw is " + finalYaw);
 
                 trainCar.moveTo(
                         pos.getX() + 0.5d,
@@ -63,8 +62,6 @@ public class TrainCarItem extends Item {
         float rawYaw = (player != null) ? player.getYRot() : context.getHorizontalDirection().toYRot();
 
         float normalizedYaw = (rawYaw % 360.0f + 360.0f) % 360.0f;
-
-        System.out.println("the player yaw is " + normalizedYaw);
 
         if (trackAxis == Direction.Axis.X) {
             //track runs east / west

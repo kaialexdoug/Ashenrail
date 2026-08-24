@@ -1,5 +1,6 @@
 {
   "creativetab.ashenrail.ashen_rail": "Ashenrail",
   "item.ashenrail.small_steam_locomotive": "Small Steam Locomotive",
-  "item.ashenrail.small_oak_carriage": "Small Oak Carriage"
+  "item.ashenrail.small_oak_carriage": "Small Oak Carriage",
+  "block.ashenrail.narrow_track": "Narrow Track"
 }

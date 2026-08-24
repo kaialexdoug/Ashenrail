@@ -57,12 +57,12 @@ public class AshenRail
             .alwaysEat().nutrition(1).saturationMod(2f).build())));
 
     // blocks
-    public static final RegistryObject<Block> NARROW_GAUGE_TRACK = BLOCKS.register("narrow_gauge_track", TrackBlock::new);
+    public static final RegistryObject<Block> NARROW_TRACK = BLOCKS.register("narrow_track", TrackBlock::new);
 
     // items (and block items)
     public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE = ITEMS.register("small_steam_locomotive", () -> new TrainCarItem(0, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SMALL_OAK_CARRIAGE = ITEMS.register("small_oak_carriage", () -> new TrainCarItem(1, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> NARROW_GAUGE_TRACK_ITEM = ITEMS.register("narrow_gauge_track", () -> new BlockItem(NARROW_GAUGE_TRACK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> NARROW_TRACK_ITEM = ITEMS.register("narrow_track", () -> new BlockItem(NARROW_TRACK.get(), new Item.Properties()));
 
     // Creates a creative tab with the id "examplemod:example_tab" for the example item, that is placed after the combat tab
     public static final RegistryObject<CreativeModeTab> ASHENRAIL_TAB = CREATIVE_MODE_TABS.register("ashenrail_tab", () -> CreativeModeTab.builder()
@@ -73,7 +73,7 @@ public class AshenRail
                 output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
                 output.accept(SMALL_STEAM_LOCOMOTIVE.get());
                 output.accept(SMALL_OAK_CARRIAGE.get());
-                output.accept(NARROW_GAUGE_TRACK_ITEM.get());
+                output.accept(NARROW_TRACK_ITEM.get());
             }).build());
 
     public AshenRail(FMLJavaModLoadingContext context)

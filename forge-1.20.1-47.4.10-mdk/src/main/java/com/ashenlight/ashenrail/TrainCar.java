@@ -1,5 +1,7 @@
 package com.ashenlight.ashenrail;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -8,6 +10,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -15,6 +18,8 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
@@ -156,6 +161,48 @@ public class TrainCar extends Entity {
         this.entityData.set(VARIANT, newVariant);
     }
 
+    private boolean isOnTrack(double x, double y, double z) {
+        BlockPos checkPos = BlockPos.containing(x, y, z);
+        BlockState state = this.level().getBlockState(checkPos);
+
+        float yaw = (this.getYRot() % 360.0f + 360.0f) % 360.0f;
+        boolean trainIsEastWest = (yaw >= 45.0f && yaw < 135.0f) || (yaw >= 225.0f && yaw < 315.0f);
+        Direction.Axis trainAxis = trainIsEastWest ? Direction.Axis.X : Direction.Axis.Z;
+
+        if (state.hasProperty(BlockStateProperties.HORIZONTAL_AXIS) && state.getBlock() instanceof TrackBlock) {
+            Direction.Axis trackAxis = state.getValue(BlockStateProperties.HORIZONTAL_AXIS);
+            return trackAxis == trainAxis;
+        }
+
+        return false;
+    }
+
+    private boolean canMoveInDirection(Vec3 delta) {
+        if (delta.lengthSqr() < 1.0E-6d) {
+            return true;
+        }
+
+        double lookAheadDistance = 2.0;
+        Vec3 moveDir = delta.normalize();
+
+        double testX = this.getX() + (moveDir.x * lookAheadDistance);
+        double testZ = this.getZ() + (moveDir.z * lookAheadDistance);
+
+        if (Math.abs(delta.x) > 0.001) {
+            if (!isOnTrack(testX, this.getY(), this.getZ())) {
+                return false;
+            }
+        }
+
+        if (Math.abs(delta.z) > 0.001) {
+            if (!isOnTrack(this.getX(), this.getY(), testZ)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static final double ACCELERATION = 0.01d;
     private static final double MAX_SPEED = 0.4d;
 
@@ -192,8 +239,17 @@ public class TrainCar extends Entity {
         } else {
             applyCoastingFriction();
         }
+
         Vec3 movement = this.getDeltaMovement();
+
+        if (!canMoveInDirection(movement)) {
+            movement = Vec3.ZERO;
+            this.setDeltaMovement(Vec3.ZERO);
+        }
+
         this.move(MoverType.SELF, movement);
+
+        this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
 
         if (!this.level().isClientSide()) {
             this.hasImpulse = true;
