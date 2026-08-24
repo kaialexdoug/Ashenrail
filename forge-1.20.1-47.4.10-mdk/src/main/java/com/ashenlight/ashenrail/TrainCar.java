@@ -95,7 +95,7 @@ public class TrainCar extends Entity {
         if (!this.level().isClientSide && !this.isRemoved()) {
             this.discard();
 
-            dropCarItem();
+            if (!source.isCreativePlayer()) dropCarItem();
         }
 
         return true;
