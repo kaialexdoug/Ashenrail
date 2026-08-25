@@ -220,7 +220,19 @@ public class TrainCar extends Entity {
     }
 
     private void applyCoastingFriction() {
-        this.setDeltaMovement(this.getDeltaMovement().multiply(0.95d, 1.0d, 0.95d));
+        Vec3 current = this.getDeltaMovement();
+
+        double horizontalSpeedSq = current.x * current.x + current.z * current.z;
+
+        double stopThresholdSq = 0.0001d;
+
+        if (horizontalSpeedSq < stopThresholdSq) {
+            this.setDeltaMovement(0.0d, current.y, 0.0d);
+            return;
+        }
+
+        double multiplier = 0.98d;
+        this.setDeltaMovement(current.x * multiplier, current.y, current.z * multiplier);
     }
 
     @Override
