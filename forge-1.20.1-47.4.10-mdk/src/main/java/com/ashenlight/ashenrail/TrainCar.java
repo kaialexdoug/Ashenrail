@@ -219,7 +219,7 @@ public class TrainCar extends Entity {
         double distance = Math.abs(thisCenter - otherCenter);
         double targetCenterDistance = DEFAULT_LENGTH + COUPLER_GAP;
 
-        if (Math.abs(distance - targetCenterDistance) <= 1.0d) {
+        if (distance <= targetCenterDistance + 1.0d) {
             double deltaPos = otherCenter - thisCenter;
             float yawRad = (float) Math.toRadians(this.getYRot());
             double forwardDir = isZ ? Math.cos(yawRad) : -Math.sin(yawRad);
@@ -237,19 +237,33 @@ public class TrainCar extends Entity {
                 return;
             }
 
-            double newPosOnAxis = thisCenter > otherCenter
-                    ? otherCenter + targetCenterDistance
-                    : otherCenter - targetCenterDistance;
+            boolean thisIsAnchored = (this.frontCoupledCar != null || this.rearCoupledCar != null);
 
-            if (isZ) {
-                this.setPos(other.getX(), other.getY(), newPosOnAxis);
-                this.setBoundingBox(this.makeBoundingBox(other.getX(), other.getY(), newPosOnAxis));
-                System.out.println("COUPLED!");
+            if (thisIsAnchored) {
+                double newOtherPosOnAxis = otherCenter > thisCenter
+                        ? thisCenter + targetCenterDistance
+                        : thisCenter - targetCenterDistance;
+                if (isZ) {
+                    other.setPos(this.getX(), this.getY(), newOtherPosOnAxis);
+                    other.setBoundingBox(other.makeBoundingBox(this.getX(), this.getY(), newOtherPosOnAxis));
+                } else {
+                    other.setPos(newOtherPosOnAxis, this.getY(), this.getZ());
+                    other.setBoundingBox(other.makeBoundingBox(newOtherPosOnAxis, this.getY(), this.getZ()));
+                }
             } else {
-                this.setPos(newPosOnAxis, other.getY(), other.getZ());
-                this.setBoundingBox(this.makeBoundingBox(newPosOnAxis, other.getY(), other.getZ()));
-                System.out.println("COUPLED!");
+                double newThisOnPosAxis = thisCenter > otherCenter
+                        ? otherCenter + targetCenterDistance
+                        : otherCenter - targetCenterDistance;
+                if (isZ) {
+                    this.setPos(other.getX(), other.getY(), newThisOnPosAxis);
+                    this.setBoundingBox(this.makeBoundingBox(other.getX(),other.getY(), newThisOnPosAxis));
+                } else {
+                    this.setPos(newThisOnPosAxis, other.getY(), other.getZ());
+                    this.setBoundingBox(this.makeBoundingBox(newThisOnPosAxis, other.getY(), other.getZ()));
+                }
             }
+
+            System.out.println("COUPLED!");
 
             if (thisTouchesFront) {
                 this.setFrontCoupledCar(other);
