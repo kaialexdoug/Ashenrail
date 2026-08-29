@@ -26,6 +26,8 @@ import net.minecraftforge.network.NetworkHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import static com.ashenlight.ashenrail.AshenRail.SMALL_OAK_CARRIAGE;
@@ -276,6 +278,28 @@ public class TrainCar extends Entity {
             } else {
                 other.setRearCoupledCar(this);
             }
+
+            double thisSpeed = this.getDeltaMovement().lengthSqr();
+            double otherSpeed = other.getDeltaMovement().lengthSqr();
+
+            if (thisSpeed < otherSpeed) {
+                return;
+            } else if (thisSpeed == otherSpeed && this.getId() < other.getId()) {
+                return;
+            }
+
+            TrainAssembly thisAssembly = this.getAssembly();
+            TrainAssembly otherAssembly = other.getAssembly();
+
+            if (thisAssembly == null && otherAssembly == null) {   // both this and other are NOT part of a train
+                new TrainAssembly(this, other);
+            } else if (thisAssembly != null && otherAssembly == null) { // only this IS part of a train
+                return;
+            } else if (thisAssembly == null) {  // only other IS part of a train
+                return;
+            } else { // both this and other ARE part of a train
+                return;
+            }
         }
     }
 
@@ -303,7 +327,62 @@ public class TrainCar extends Entity {
     public void remove(Entity.RemovalReason reason) {
         this.uncoupleAll();
 
+        if (this.assembly != null) {
+            this.assembly.removeCar(this);
+        }
+
         super.remove(reason);
+    }
+
+    // train assembly
+
+    private TrainAssembly assembly = null;
+
+    public TrainAssembly getAssembly() {
+        return this.assembly;
+    }
+
+    public void setAssembly(TrainAssembly assembly) {
+        this.assembly = assembly;
+    }
+
+    // breadcrumbs
+
+    public record Breadcrumb(Vec3 pos, float yaw) {}
+
+    private final Deque<Breadcrumb> movementHistory = new ArrayDeque<>();
+
+    public Deque<Breadcrumb> getMovementHistory() {
+        return movementHistory;
+    }
+
+    public void recordBreadcrumb() {
+        if (movementHistory.size() >= 100) {
+            movementHistory.removeLast();
+        }
+        movementHistory.addFirst(new Breadcrumb(this.position(), this.getYRot()));
+    }
+
+    public Breadcrumb getPointAtDistance(double targetDistance) {
+        if (movementHistory.isEmpty()) {
+            return new Breadcrumb(this.position(), this.getYRot());
+        }
+
+        double accumulatedDistance = 0.0d;
+        Vec3 prevPos = this.position();
+        Breadcrumb chosen = movementHistory.peekFirst();
+
+        for (Breadcrumb point : movementHistory) {
+            accumulatedDistance += prevPos.distanceTo(point.pos());
+            chosen = point;
+
+            if (accumulatedDistance >= targetDistance) {
+                break;
+            }
+            prevPos = point.pos();
+        }
+
+        return chosen;
     }
 
     // movement
@@ -424,6 +503,17 @@ public class TrainCar extends Entity {
 
         if (!this.level().isClientSide()) {
             this.hasImpulse = true;
+
+            // recording breadcrumbs
+            if (this.xOld != this.getX() || this.yOld != this.getY() || this.zOld != this.getZ()) {
+                recordBreadcrumb();
+            }
+
+            // tick the assembly
+            if (this.assembly != null && this.assembly.getCars().indexOf(this) == 0) {
+                double targetSpacing = DEFAULT_LENGTH + COUPLER_GAP;
+                this.assembly.tickAssembly(targetSpacing);
+            }
         }
     }
 }
