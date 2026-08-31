@@ -239,30 +239,29 @@ public class TrainCar extends Entity {
                 return;
             }
 
-            boolean thisIsAnchored = (this.frontCoupledCar != null || this.rearCoupledCar != null);
+            // determining lead car
+            double thisSpeed = this.getDeltaMovement().lengthSqr();
+            double otherSpeed = other.getDeltaMovement().lengthSqr();
+            boolean thisIsAnchor = (thisSpeed > otherSpeed) || (thisSpeed == otherSpeed && this.getId() < other.getId());
 
-            if (thisIsAnchored) {
-                double newOtherPosOnAxis = otherCenter > thisCenter
-                        ? thisCenter + targetCenterDistance
-                        : thisCenter - targetCenterDistance;
+            if (thisIsAnchor) {
+                System.out.println(this.getId() + " is anchor and positioning " + other.getId());
+
+                double sign = (deltaPos >= 0) ? 1.0 : -1.0;
+
+                double newOtherPos = thisCenter + (sign * targetCenterDistance);
+
+                System.out.println("isZ: " + isZ);
+                System.out.println(this.getId() + " center: " + thisCenter);
+                System.out.println(other.getId() + " center: " + otherCenter);
+
                 if (isZ) {
-                    other.setPos(this.getX(), this.getY(), newOtherPosOnAxis);
-                    other.setBoundingBox(other.makeBoundingBox(this.getX(), this.getY(), newOtherPosOnAxis));
+                    other.moveTo(this.getX(), other.getY(), newOtherPos, other.getYRot(), other.getXRot());
                 } else {
-                    other.setPos(newOtherPosOnAxis, this.getY(), this.getZ());
-                    other.setBoundingBox(other.makeBoundingBox(newOtherPosOnAxis, this.getY(), this.getZ()));
+                    other.moveTo(newOtherPos, other.getY(), this.getZ(), other.getYRot(), other.getXRot());
                 }
             } else {
-                double newThisOnPosAxis = thisCenter > otherCenter
-                        ? otherCenter + targetCenterDistance
-                        : otherCenter - targetCenterDistance;
-                if (isZ) {
-                    this.setPos(other.getX(), other.getY(), newThisOnPosAxis);
-                    this.setBoundingBox(this.makeBoundingBox(other.getX(),other.getY(), newThisOnPosAxis));
-                } else {
-                    this.setPos(newThisOnPosAxis, other.getY(), other.getZ());
-                    this.setBoundingBox(this.makeBoundingBox(newThisOnPosAxis, other.getY(), other.getZ()));
-                }
+                return;
             }
 
             System.out.println("COUPLED!");
@@ -279,23 +278,18 @@ public class TrainCar extends Entity {
                 other.setRearCoupledCar(this);
             }
 
-            double thisSpeed = this.getDeltaMovement().lengthSqr();
-            double otherSpeed = other.getDeltaMovement().lengthSqr();
-
-            if (thisSpeed < otherSpeed) {
-                return;
-            } else if (thisSpeed == otherSpeed && this.getId() < other.getId()) {
-                return;
-            }
-
             TrainAssembly thisAssembly = this.getAssembly();
             TrainAssembly otherAssembly = other.getAssembly();
 
-            if (thisAssembly == null && otherAssembly == null) {   // both this and other are NOT part of a train
-                new TrainAssembly(this, other);
+            if (thisAssembly == null && otherAssembly == null) { // both this and other are NOT part of a train
+                TrainAssembly newAssembly = new TrainAssembly(this, other);
+                this.setAssembly(newAssembly);
+                other.setAssembly(newAssembly);
+                System.out.println(this.getId() + " assembly: " + this.getAssembly());
+                System.out.println(other.getId() + " assembly: " + this.getAssembly());
             } else if (thisAssembly != null && otherAssembly == null) { // only this IS part of a train
                 return;
-            } else if (thisAssembly == null) {  // only other IS part of a train
+            } else if (thisAssembly == null) { // only other IS part of a train
                 return;
             } else { // both this and other ARE part of a train
                 return;
@@ -489,20 +483,20 @@ public class TrainCar extends Entity {
 
         this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
 
-        // coupling listener
-        if (this.hasOpenCoupler()) {
-            AABB searchBox = this.getBoundingBox().inflate(1.5d);
-            List<TrainCar> nearbyCars = this.level().getEntitiesOfClass(TrainCar.class, searchBox);
-
-            for (TrainCar nearbyCar : nearbyCars) {
-                if (nearbyCar != this && nearbyCar.hasOpenCoupler()) {
-                    this.tryCoupleWith(nearbyCar);
-                }
-            }
-        }
-
         if (!this.level().isClientSide()) {
             this.hasImpulse = true;
+
+            // coupling listener
+            if (this.hasOpenCoupler()) {
+                AABB searchBox = this.getBoundingBox().inflate(1.5d);
+                List<TrainCar> nearbyCars = this.level().getEntitiesOfClass(TrainCar.class, searchBox);
+
+                for (TrainCar nearbyCar : nearbyCars) {
+                    if (nearbyCar != this && (this.getAssembly() == null || this.getAssembly() != nearbyCar.getAssembly()) && nearbyCar.hasOpenCoupler()) {
+                        this.tryCoupleWith(nearbyCar);
+                    }
+                }
+            }
 
             // recording breadcrumbs
             if (this.xOld != this.getX() || this.yOld != this.getY() || this.zOld != this.getZ()) {
