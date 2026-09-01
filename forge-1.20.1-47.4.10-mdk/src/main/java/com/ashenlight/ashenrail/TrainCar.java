@@ -10,6 +10,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.util.Mth;
 import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.ashenlight.ashenrail.AshenRail.*;
@@ -65,8 +67,8 @@ public class TrainCar extends Entity {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
-    private static final double DEFAULT_LENGTH = 4.0d;
-    private static final double  DEFAULT_WIDTH = 1.5d;
+    public static final double DEFAULT_LENGTH = 4.0d;
+    public static final double  DEFAULT_WIDTH = 1.5d;
 
     protected AABB makeBoundingBox(double x, double y, double z) {
         float yaw = (this.getYRot() % 360.0f + 360.0f) % 360.0f;
@@ -168,6 +170,10 @@ public class TrainCar extends Entity {
 
     public void setVariant(int newVariant) {
         this.entityData.set(VARIANT, newVariant);
+    }
+
+    public boolean isLeadCar() {
+        return this.assembly == null || (!this.assembly.getCars().isEmpty() && this.assembly.getCars().get(0) == this);
     }
 
     // coupling
@@ -346,6 +352,81 @@ public class TrainCar extends Entity {
         this.assembly = assembly;
     }
 
+    // breadcrumbs
+
+    public final Deque<TrainCar.Breadcrumb> breadcrumbRecord = new ArrayDeque<>();
+    private double totalDistanceTraveled = 0.0d;
+    private static final double MIN_RECORD_DISTANCE = 0.05d;
+
+    public record Breadcrumb(
+            Vec3 position,
+            float yRot,
+            float xRot,
+            double cumulativeDistance
+    ) {}
+
+    public void recordPositions() {
+        if (this.getAssembly() == null) return;
+
+        Vec3 currentPos = this.position();
+
+        if (breadcrumbRecord.isEmpty()) {
+            breadcrumbRecord.addFirst(new Breadcrumb(
+                    currentPos,
+                    this.getYRot(),
+                    this.getXRot(),
+                    totalDistanceTraveled
+            ));
+            return;
+        }
+
+        Breadcrumb lastRecorded = breadcrumbRecord.peekFirst();
+        double distMoved = lastRecorded.position().distanceTo(currentPos);
+
+        if (distMoved >= MIN_RECORD_DISTANCE) {
+            totalDistanceTraveled += distMoved;
+
+            breadcrumbRecord.addFirst(new Breadcrumb(
+                    currentPos,
+                    this.getYRot(),
+                    this.getXRot(),
+                    totalDistanceTraveled
+            ));
+        }
+    }
+
+    public double getTotalDistanceTraveled() {
+        return this.totalDistanceTraveled;
+    }
+
+    public Breadcrumb sampleBreadcrumb(double targetDistance) {
+        if (this.breadcrumbRecord.isEmpty()) return null;
+
+        Iterator<Breadcrumb> iterator = this.breadcrumbRecord.iterator();
+        Breadcrumb b1 = iterator.next();
+
+        if (targetDistance >= b1.cumulativeDistance()) return b1;
+
+        while (iterator.hasNext()) {
+            Breadcrumb b2 = iterator.next();
+
+            if (b2.cumulativeDistance() <= targetDistance) {
+                double segmentLength = b1.cumulativeDistance() - b2.cumulativeDistance();
+                if (segmentLength <= 0.0001d) return b1;
+
+                double t = (targetDistance - b2.cumulativeDistance()) / segmentLength;
+
+                Vec3 lerpedPos = b2.position().lerp(b1.position(), t);
+                float lerpedY = Mth.rotLerp((float) t, b2.yRot(), b1.yRot());
+                float lerpedX = Mth.lerp((float) t, b2.xRot(), b1.xRot());
+
+                return new Breadcrumb(lerpedPos, lerpedY, lerpedX, targetDistance);
+            }
+            b1 = b2;
+        }
+        return this.breadcrumbRecord.peekLast();
+    }
+
     // movement
 
     private boolean isOnTrack(double x, double y, double z) {
@@ -425,28 +506,40 @@ public class TrainCar extends Entity {
     @Override
     public void tick() {
         super.tick();
+
+        boolean isLead = this.isLeadCar();
+
         // only variant 0 (steam loco) responds to player drive inputs.
         if (this.getVariant() == 0 && this.getFirstPassenger() instanceof Player player) {
             float forwardInput = player.zza;
+
+            TrainCar targetLead = (this.assembly != null && !this.assembly.getCars().isEmpty())
+                    ? this.assembly.getCars().get(0)
+                    : this;
+
             if (forwardInput > 0.0f) {
-                accelerate(false);
+                targetLead.accelerate(false);
             } else if (forwardInput < 0.0f) {
-                accelerate(true);
+                targetLead.accelerate(true);
             } else {
-                applyCoastingFriction();
+                targetLead.applyCoastingFriction();
             }
-        } else {
+        } else if (isLead) {
             applyCoastingFriction();
         }
 
-        Vec3 movement = this.getDeltaMovement();
+        if (isLead) {
+            Vec3 movement = this.getDeltaMovement();
 
-        if (!canMoveInDirection(movement)) {
-            movement = Vec3.ZERO;
+            if (!canMoveInDirection(movement)) {
+                movement = Vec3.ZERO;
+                this.setDeltaMovement(Vec3.ZERO);
+            }
+
+            this.move(MoverType.SELF, movement);
+        } else {
             this.setDeltaMovement(Vec3.ZERO);
         }
-
-        this.move(MoverType.SELF, movement);
 
         this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
 
@@ -465,12 +558,16 @@ public class TrainCar extends Entity {
                 }
             }
 
-            // recording breadcrumbs
 
-            // tick the assembly
-            if (this.assembly != null && this.assembly.getCars().indexOf(this) == 0) {
-                double targetSpacing = DEFAULT_LENGTH + COUPLER_GAP;
-                this.assembly.tickAssembly(targetSpacing);
+
+            if (this.assembly != null) {
+                // recording breadcrumbs
+                this.recordPositions();
+
+                if (this.assembly.getCars().indexOf(this) == 0) {
+                    // tick the assembly
+                    this.assembly.tickAssembly();
+                }
             }
         }
     }

@@ -1,10 +1,15 @@
 package com.ashenlight.ashenrail;
 
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static com.ashenlight.ashenrail.AshenRail.logInGame;
+import static com.ashenlight.ashenrail.TrainCar.COUPLER_GAP;
+import static com.ashenlight.ashenrail.TrainCar.DEFAULT_LENGTH;
 
 public class TrainAssembly {
     private final List<TrainCar> cars = new ArrayList<>();
@@ -72,6 +77,8 @@ public class TrainAssembly {
         }
     }
 
+    // syncing movement
+
     public boolean isMovingForward() {
         if (cars.isEmpty()) return true;
 
@@ -95,8 +102,31 @@ public class TrainAssembly {
         return movement.dot(assemblyForward) >= 0;
     }
 
-    public void tickAssembly(double targetSpacing) {
+    public void tickAssembly() {
         if (cars.size() < 2) return;
+
+        double targetSpacing = DEFAULT_LENGTH + COUPLER_GAP;
+
+        for (int i = 1; i < cars.size(); i++) {
+            TrainCar leader = cars.get(i-1);
+            TrainCar follower = cars.get(i);
+
+            double targetDistance = leader.getTotalDistanceTraveled() - targetSpacing;
+
+            TrainCar.Breadcrumb targetPoint = leader.sampleBreadcrumb(targetDistance);
+
+            if (targetPoint != null) {
+                follower.moveTo(
+                    targetPoint.position().x,
+                    targetPoint.position().y,
+                    targetPoint.position().z,
+                    targetPoint.yRot(),
+                    targetPoint.xRot()
+                );
+
+                follower.recordPositions(); // redundant?
+            }
+        }
 
         boolean movingForward = isMovingForward();
     }
