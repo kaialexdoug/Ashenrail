@@ -17,6 +17,21 @@ public class TrainAssembly {
         idleCar.setAssembly(this);
     }
 
+    @Override
+    public String toString() {
+        if (cars.isEmpty()) return "TrainAssembly[Empty]";
+
+        StringBuilder sb = new StringBuilder("TrainAssembly[");
+        for (int i = 0; i < cars.size(); i++) {
+            sb.append(cars.get(i).getId());
+            if (i < cars.size()-1) {
+                sb.append(" -> ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
     public List<TrainCar> getCars() {
         return cars;
     }
@@ -84,26 +99,6 @@ public class TrainAssembly {
         if (cars.size() < 2) return;
 
         boolean movingForward = isMovingForward();
-
-        if (movingForward) {
-            for (int i = 1; i < cars.size(); i++) {
-                TrainCar leader = cars.get(i-1);
-                TrainCar follower = cars.get(i);
-
-                TrainCar.Breadcrumb target = leader.getPointAtDistance(targetSpacing);
-                follower.setPos(target.pos().x, target.pos().y, target.pos().z);
-                follower.setYRot(target.yaw());
-            }
-        } else {
-            for (int i = cars.size() - 2; i >= 0; i--) {
-                TrainCar leader = cars.get(i+1);
-                TrainCar follower = cars.get(i);
-
-                TrainCar.Breadcrumb target = leader.getPointAtDistance(targetSpacing);
-                follower.setPos(target.pos().x, target.pos().y, target.pos().z);
-                follower.setYRot(target.yaw());
-            }
-        }
     }
 }
 

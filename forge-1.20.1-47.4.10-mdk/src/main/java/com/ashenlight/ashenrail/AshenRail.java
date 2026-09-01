@@ -9,6 +9,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -140,6 +141,15 @@ public class AshenRail
             // Some client setup code
             LOGGER.info("HELLO FROM CLIENT SETUP");
             LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+        }
+    }
+
+    public static void logInGame(Level level, String message) {
+        if (level != null && !level.isClientSide() && level.getServer() != null) {
+            level.getServer().getPlayerList().broadcastSystemMessage(
+                    Component.literal("[Debug] " + message),
+                    false
+            );
         }
     }
 }

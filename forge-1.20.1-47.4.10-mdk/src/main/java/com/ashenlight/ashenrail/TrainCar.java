@@ -30,8 +30,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-import static com.ashenlight.ashenrail.AshenRail.SMALL_OAK_CARRIAGE;
-import static com.ashenlight.ashenrail.AshenRail.SMALL_STEAM_LOCOMOTIVE;
+import static com.ashenlight.ashenrail.AshenRail.*;
 
 public class TrainCar extends Entity {
 
@@ -242,18 +241,19 @@ public class TrainCar extends Entity {
             // determining lead car
             double thisSpeed = this.getDeltaMovement().lengthSqr();
             double otherSpeed = other.getDeltaMovement().lengthSqr();
-            boolean thisIsAnchor = (thisSpeed > otherSpeed) || (thisSpeed == otherSpeed && this.getId() < other.getId());
+
+            boolean thisHasAssembly = (this.getAssembly() != null);
+            boolean otherHasAssembly = (other.getAssembly() != null);
+
+            boolean thisIsAnchor = (thisHasAssembly != otherHasAssembly)
+                    ? thisHasAssembly
+                    : (thisSpeed != otherSpeed ? thisSpeed > otherSpeed : this.getId() < other.getId());
 
             if (thisIsAnchor) {
-                System.out.println(this.getId() + " is anchor and positioning " + other.getId());
 
                 double sign = (deltaPos >= 0) ? 1.0 : -1.0;
 
                 double newOtherPos = thisCenter + (sign * targetCenterDistance);
-
-                System.out.println("isZ: " + isZ);
-                System.out.println(this.getId() + " center: " + thisCenter);
-                System.out.println(other.getId() + " center: " + otherCenter);
 
                 if (isZ) {
                     other.moveTo(this.getX(), other.getY(), newOtherPos, other.getYRot(), other.getXRot());
@@ -263,8 +263,6 @@ public class TrainCar extends Entity {
             } else {
                 return;
             }
-
-            System.out.println("COUPLED!");
 
             if (thisTouchesFront) {
                 this.setFrontCoupledCar(other);
@@ -282,16 +280,24 @@ public class TrainCar extends Entity {
             TrainAssembly otherAssembly = other.getAssembly();
 
             if (thisAssembly == null && otherAssembly == null) { // both this and other are NOT part of a train
-                TrainAssembly newAssembly = new TrainAssembly(this, other);
-                this.setAssembly(newAssembly);
-                other.setAssembly(newAssembly);
-                System.out.println(this.getId() + " assembly: " + this.getAssembly());
-                System.out.println(other.getId() + " assembly: " + this.getAssembly());
+                new TrainAssembly(this, other);
+                logInGame(this.level(), this.getAssembly().toString());
             } else if (thisAssembly != null && otherAssembly == null) { // only this IS part of a train
-                return;
+                if (thisAssembly.getCars().get(0) == this) {
+                    thisAssembly.addFront(other);
+                } else {
+                    thisAssembly.addRear(other);
+                }
+                logInGame(this.level(), this.getAssembly().toString());
             } else if (thisAssembly == null) { // only other IS part of a train
-                return;
+                if (otherAssembly.getCars().get(0) == other) {
+                    otherAssembly.addFront(this);
+                } else {
+                    otherAssembly.addRear(this);
+                }
+                logInGame(this.level(), this.getAssembly().toString());
             } else { // both this and other ARE part of a train
+                logInGame(this.level(), this.getAssembly().toString());
                 return;
             }
         }
@@ -338,45 +344,6 @@ public class TrainCar extends Entity {
 
     public void setAssembly(TrainAssembly assembly) {
         this.assembly = assembly;
-    }
-
-    // breadcrumbs
-
-    public record Breadcrumb(Vec3 pos, float yaw) {}
-
-    private final Deque<Breadcrumb> movementHistory = new ArrayDeque<>();
-
-    public Deque<Breadcrumb> getMovementHistory() {
-        return movementHistory;
-    }
-
-    public void recordBreadcrumb() {
-        if (movementHistory.size() >= 100) {
-            movementHistory.removeLast();
-        }
-        movementHistory.addFirst(new Breadcrumb(this.position(), this.getYRot()));
-    }
-
-    public Breadcrumb getPointAtDistance(double targetDistance) {
-        if (movementHistory.isEmpty()) {
-            return new Breadcrumb(this.position(), this.getYRot());
-        }
-
-        double accumulatedDistance = 0.0d;
-        Vec3 prevPos = this.position();
-        Breadcrumb chosen = movementHistory.peekFirst();
-
-        for (Breadcrumb point : movementHistory) {
-            accumulatedDistance += prevPos.distanceTo(point.pos());
-            chosen = point;
-
-            if (accumulatedDistance >= targetDistance) {
-                break;
-            }
-            prevPos = point.pos();
-        }
-
-        return chosen;
     }
 
     // movement
@@ -499,9 +466,6 @@ public class TrainCar extends Entity {
             }
 
             // recording breadcrumbs
-            if (this.xOld != this.getX() || this.yOld != this.getY() || this.zOld != this.getZ()) {
-                recordBreadcrumb();
-            }
 
             // tick the assembly
             if (this.assembly != null && this.assembly.getCars().indexOf(this) == 0) {
