@@ -8,8 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 import static com.ashenlight.ashenrail.AshenRail.logInGame;
-import static com.ashenlight.ashenrail.TrainCar.COUPLER_GAP;
-import static com.ashenlight.ashenrail.TrainCar.DEFAULT_LENGTH;
+import static com.ashenlight.ashenrail.TrainCar.*;
 
 public class TrainAssembly {
     private final List<TrainCar> cars = new ArrayList<>();
@@ -105,17 +104,15 @@ public class TrainAssembly {
     public void tickAssembly() {
         if (cars.size() < 2) return;
 
-        double targetSpacing = DEFAULT_LENGTH + COUPLER_GAP;
-
         for (int i = 1; i < cars.size(); i++) {
             TrainCar leader = cars.get(i-1);
             TrainCar follower = cars.get(i);
 
-            double targetDistance = leader.getTotalDistanceTraveled() - targetSpacing;
+            double targetDistance = leader.getTotalDistanceTraveled() - TARGET_SPACING;
 
             TrainCar.Breadcrumb targetPoint = leader.sampleBreadcrumb(targetDistance);
 
-            if (targetPoint != null) {
+            if (targetPoint != null && leader.getTotalDistanceTraveled() >= TARGET_SPACING) {
                 follower.moveTo(
                     targetPoint.position().x,
                     targetPoint.position().y,
@@ -124,7 +121,7 @@ public class TrainAssembly {
                     targetPoint.xRot()
                 );
 
-                follower.recordPositions(); // redundant?
+                follower.hasImpulse = true;
             }
         }
 

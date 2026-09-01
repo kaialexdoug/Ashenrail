@@ -70,6 +70,9 @@ public class TrainCar extends Entity {
     public static final double DEFAULT_LENGTH = 4.0d;
     public static final double  DEFAULT_WIDTH = 1.5d;
 
+    public static final double COUPLER_GAP = 0.5d;
+    public static final double TARGET_SPACING = DEFAULT_LENGTH + COUPLER_GAP;
+
     protected AABB makeBoundingBox(double x, double y, double z) {
         float yaw = (this.getYRot() % 360.0f + 360.0f) % 360.0f;
         boolean facingEastWest = (yaw >= 45.0f && yaw < 135.0f) || (yaw >= 225.0f && yaw < 315.0f);
@@ -181,8 +184,6 @@ public class TrainCar extends Entity {
     private TrainCar frontCoupledCar = null;
     private TrainCar rearCoupledCar = null;
 
-    public static final double COUPLER_GAP = 0.5d;
-
     public Direction.Axis getTrackAxis() {
         float yaw = (this.getYRot() % 360.0f + 360.0f) % 360.0f;
         boolean eastWest = (yaw >= 45.0f && yaw < 135.0f) || (yaw >= 225.0f && yaw < 315.0f);
@@ -224,7 +225,7 @@ public class TrainCar extends Entity {
         double otherCenter = isZ ? other.getZ() : other.getX();
 
         double distance = Math.abs(thisCenter - otherCenter);
-        double targetCenterDistance = DEFAULT_LENGTH + COUPLER_GAP;
+        double targetCenterDistance = TARGET_SPACING;
 
         if (distance <= targetCenterDistance + 1.0d) {
             double deltaPos = otherCenter - thisCenter;
