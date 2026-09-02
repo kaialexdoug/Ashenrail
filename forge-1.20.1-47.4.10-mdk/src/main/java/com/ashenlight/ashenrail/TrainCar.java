@@ -428,6 +428,28 @@ public class TrainCar extends Entity {
         return this.breadcrumbRecord.peekLast();
     }
 
+    public void populateInitialBreadcrumbs(double totalLength, double stepSize) {
+        this.breadcrumbRecord.clear();
+
+        Vec3 forwardDir = Vec3.directionFromRotation(this.getXRot(), this.getYRot());
+        Vec3 backwardDir = forwardDir.scale(-1.0d);
+
+        int stepCount = (int) Math.ceil(totalLength / stepSize);
+
+        for (int i = 0; i <= stepCount; i++) {
+            double offsetDistance = i * stepSize;
+            Vec3 simulatedPos = this.position().add(backwardDir.scale(offsetDistance));
+            double simulatedDist = this.totalDistanceTraveled - offsetDistance;
+
+            this.breadcrumbRecord.addLast(new Breadcrumb (
+                    simulatedPos,
+                    this.getYRot(),
+                    this.getXRot(),
+                    simulatedDist
+            ));
+        }
+    }
+
     // movement
 
     private boolean isOnTrack(double x, double y, double z) {
@@ -558,8 +580,6 @@ public class TrainCar extends Entity {
                     }
                 }
             }
-
-
 
             if (this.assembly != null) {
                 // recording breadcrumbs

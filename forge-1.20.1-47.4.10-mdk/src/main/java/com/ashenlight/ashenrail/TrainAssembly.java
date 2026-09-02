@@ -19,6 +19,8 @@ public class TrainAssembly {
 
         movingCar.setAssembly(this);
         idleCar.setAssembly(this);
+
+        initializeBreadcrumbs();
     }
 
     @Override
@@ -40,6 +42,14 @@ public class TrainAssembly {
         return cars;
     }
 
+    public TrainCar getLead() {
+        return cars.get(0);
+    }
+
+    public TrainCar getRear() {
+        return cars.get(cars.size()-1);
+    }
+
     public int getIndex(TrainCar car) {
         return cars.indexOf(car);
     }
@@ -52,6 +62,7 @@ public class TrainAssembly {
         if (!cars.contains(car)) {
             cars.add(0, car);
             car.setAssembly(this);
+            initializeBreadcrumbs();
         }
     }
 
@@ -59,6 +70,7 @@ public class TrainAssembly {
         if (!cars.contains(car)) {
             cars.add(car);
             car.setAssembly(this);
+            initializeBreadcrumbs();
         }
     }
 
@@ -77,6 +89,16 @@ public class TrainAssembly {
     }
 
     // syncing movement
+
+    public void initializeBreadcrumbs() {
+        if (cars.isEmpty()) return;
+
+        TrainCar leadCar = this.getLead();
+
+        double totalConsistLength = (cars.size() - 1) * TARGET_SPACING;
+
+        leadCar.populateInitialBreadcrumbs(totalConsistLength, 0.25d);
+    }
 
     public boolean isMovingForward() {
         if (cars.isEmpty()) return true;
@@ -104,15 +126,18 @@ public class TrainAssembly {
     public void tickAssembly() {
         if (cars.size() < 2) return;
 
+        boolean movingForward = isMovingForward();
+
+        TrainCar leadCar = this.getLead();
+
         for (int i = 1; i < cars.size(); i++) {
-            TrainCar leader = cars.get(i-1);
             TrainCar follower = cars.get(i);
 
-            double targetDistance = leader.getTotalDistanceTraveled() - TARGET_SPACING;
+            double targetDistance = leadCar.getTotalDistanceTraveled() - (i * TARGET_SPACING);
 
-            TrainCar.Breadcrumb targetPoint = leader.sampleBreadcrumb(targetDistance);
+            TrainCar.Breadcrumb targetPoint = leadCar.sampleBreadcrumb(targetDistance);
 
-            if (targetPoint != null && leader.getTotalDistanceTraveled() >= TARGET_SPACING) {
+            if (targetPoint != null) {
                 follower.moveTo(
                     targetPoint.position().x,
                     targetPoint.position().y,
@@ -124,8 +149,6 @@ public class TrainAssembly {
                 follower.hasImpulse = true;
             }
         }
-
-        boolean movingForward = isMovingForward();
     }
 }
 
