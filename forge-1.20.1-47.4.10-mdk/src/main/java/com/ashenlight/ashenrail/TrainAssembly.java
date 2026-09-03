@@ -142,8 +142,8 @@ public class TrainAssembly {
                     targetPoint.position().x,
                     targetPoint.position().y,
                     targetPoint.position().z,
-                    targetPoint.yRot(),
-                    targetPoint.xRot()
+                    follower.getYRot(),
+                    follower.getXRot()
                 );
 
                 follower.hasImpulse = true;

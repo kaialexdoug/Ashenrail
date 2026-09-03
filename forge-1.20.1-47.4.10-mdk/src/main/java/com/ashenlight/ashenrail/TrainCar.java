@@ -431,14 +431,17 @@ public class TrainCar extends Entity {
     public void populateInitialBreadcrumbs(double totalLength, double stepSize) {
         this.breadcrumbRecord.clear();
 
+        boolean isReversed = this.getFrontCoupledCar() != null;
+
         Vec3 forwardDir = Vec3.directionFromRotation(this.getXRot(), this.getYRot());
         Vec3 backwardDir = forwardDir.scale(-1.0d);
+        Vec3 dir = isReversed ? forwardDir : backwardDir;
 
         int stepCount = (int) Math.ceil(totalLength / stepSize);
 
         for (int i = 0; i <= stepCount; i++) {
             double offsetDistance = i * stepSize;
-            Vec3 simulatedPos = this.position().add(backwardDir.scale(offsetDistance));
+            Vec3 simulatedPos = this.position().add(dir.scale(offsetDistance));
             double simulatedDist = this.totalDistanceTraveled - offsetDistance;
 
             this.breadcrumbRecord.addLast(new Breadcrumb (
