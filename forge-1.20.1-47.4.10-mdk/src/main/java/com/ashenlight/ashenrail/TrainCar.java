@@ -176,7 +176,16 @@ public class TrainCar extends Entity {
     }
 
     public boolean isLeadCar() {
-        return this.assembly == null || (!this.assembly.getCars().isEmpty() && this.assembly.getCars().get(0) == this);
+        if (this.isAlone()) return false;
+        return this.assembly.getCars().get(0) == this;
+    }
+
+    public boolean isAlone() {
+        return this.getAssembly() == null;
+    }
+
+    public boolean isLocomotive() {
+        return this.getVariant() == 0;
     }
 
     // coupling
@@ -353,222 +362,13 @@ public class TrainCar extends Entity {
         this.assembly = assembly;
     }
 
-    // breadcrumbs
-
-    public final Deque<TrainCar.Breadcrumb> breadcrumbRecord = new ArrayDeque<>();
-    private double totalDistanceTraveled = 0.0d;
-    private static final double MIN_RECORD_DISTANCE = 0.05d;
-
-    public record Breadcrumb(
-            Vec3 position,
-            float yRot,
-            float xRot,
-            double cumulativeDistance
-    ) {}
-
-    public void recordPositions() {
-        if (this.getAssembly() == null) return;
-
-        Vec3 currentPos = this.position();
-
-        if (breadcrumbRecord.isEmpty()) {
-            breadcrumbRecord.addFirst(new Breadcrumb(
-                    currentPos,
-                    this.getYRot(),
-                    this.getXRot(),
-                    totalDistanceTraveled
-            ));
-            return;
-        }
-
-        Breadcrumb lastRecorded = breadcrumbRecord.peekFirst();
-        double distMoved = lastRecorded.position().distanceTo(currentPos);
-
-        if (distMoved >= MIN_RECORD_DISTANCE) {
-            totalDistanceTraveled += distMoved;
-
-            breadcrumbRecord.addFirst(new Breadcrumb(
-                    currentPos,
-                    this.getYRot(),
-                    this.getXRot(),
-                    totalDistanceTraveled
-            ));
-        }
-    }
-
-    public double getTotalDistanceTraveled() {
-        return this.totalDistanceTraveled;
-    }
-
-    public Breadcrumb sampleBreadcrumb(double targetDistance) {
-        if (this.breadcrumbRecord.isEmpty()) return null;
-
-        Iterator<Breadcrumb> iterator = this.breadcrumbRecord.iterator();
-        Breadcrumb b1 = iterator.next();
-
-        if (targetDistance >= b1.cumulativeDistance()) return b1;
-
-        while (iterator.hasNext()) {
-            Breadcrumb b2 = iterator.next();
-
-            if (b2.cumulativeDistance() <= targetDistance) {
-                double segmentLength = b1.cumulativeDistance() - b2.cumulativeDistance();
-                if (segmentLength <= 0.0001d) return b1;
-
-                double t = (targetDistance - b2.cumulativeDistance()) / segmentLength;
-
-                Vec3 lerpedPos = b2.position().lerp(b1.position(), t);
-                float lerpedY = Mth.rotLerp((float) t, b2.yRot(), b1.yRot());
-                float lerpedX = Mth.lerp((float) t, b2.xRot(), b1.xRot());
-
-                return new Breadcrumb(lerpedPos, lerpedY, lerpedX, targetDistance);
-            }
-            b1 = b2;
-        }
-        return this.breadcrumbRecord.peekLast();
-    }
-
-    public void populateInitialBreadcrumbs(double totalLength, double stepSize) {
-        this.breadcrumbRecord.clear();
-
-        boolean isReversed = this.getFrontCoupledCar() != null;
-
-        Vec3 forwardDir = Vec3.directionFromRotation(this.getXRot(), this.getYRot());
-        Vec3 backwardDir = forwardDir.scale(-1.0d);
-        Vec3 dir = isReversed ? forwardDir : backwardDir;
-
-        int stepCount = (int) Math.ceil(totalLength / stepSize);
-
-        for (int i = 0; i <= stepCount; i++) {
-            double offsetDistance = i * stepSize;
-            Vec3 simulatedPos = this.position().add(dir.scale(offsetDistance));
-            double simulatedDist = this.totalDistanceTraveled - offsetDistance;
-
-            this.breadcrumbRecord.addLast(new Breadcrumb (
-                    simulatedPos,
-                    this.getYRot(),
-                    this.getXRot(),
-                    simulatedDist
-            ));
-        }
-    }
-
-    // movement
-
-    private boolean isOnTrack(double x, double y, double z) {
-        BlockPos checkPos = BlockPos.containing(x, y, z);
-        BlockState state = this.level().getBlockState(checkPos);
-
-        float yaw = (this.getYRot() % 360.0f + 360.0f) % 360.0f;
-        boolean trainIsEastWest = (yaw >= 45.0f && yaw < 135.0f) || (yaw >= 225.0f && yaw < 315.0f);
-        Direction.Axis trainAxis = trainIsEastWest ? Direction.Axis.X : Direction.Axis.Z;
-
-        if (state.hasProperty(BlockStateProperties.HORIZONTAL_AXIS) && state.getBlock() instanceof TrackBlock) {
-            Direction.Axis trackAxis = state.getValue(BlockStateProperties.HORIZONTAL_AXIS);
-            return trackAxis == trainAxis;
-        }
-
-        return false;
-    }
-
-    private boolean canMoveInDirection(Vec3 delta) {
-        if (delta.lengthSqr() < 1.0E-6d) {
-            return true;
-        }
-
-        double lookAheadDistance = 2.0;
-        Vec3 moveDir = delta.normalize();
-
-        double testX = this.getX() + (moveDir.x * lookAheadDistance);
-        double testZ = this.getZ() + (moveDir.z * lookAheadDistance);
-
-        if (Math.abs(delta.x) > 0.001) {
-            if (!isOnTrack(testX, this.getY(), this.getZ())) {
-                return false;
-            }
-        }
-
-        if (Math.abs(delta.z) > 0.001) {
-            if (!isOnTrack(this.getX(), this.getY(), testZ)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static final double ACCELERATION = 0.01d;
-    private static final double MAX_SPEED = 0.4d;
-
-    private void accelerate(boolean reversed) {
-        int directionFactor = reversed ? -1 : 1;
-        Vec3 lookVec = this.getLookAngle();
-        Vec3 currentDeltaMovement = this.getDeltaMovement();
-
-        if (currentDeltaMovement.length() < MAX_SPEED) {
-            this.setDeltaMovement(currentDeltaMovement.add(
-                    lookVec.x * ACCELERATION * directionFactor,
-                    0.0D,
-                    lookVec.z * ACCELERATION * directionFactor));
-        }
-    }
-
-    private void applyCoastingFriction() {
-        Vec3 current = this.getDeltaMovement();
-
-        double horizontalSpeedSq = current.x * current.x + current.z * current.z;
-
-        double stopThresholdSq = 0.0001d;
-
-        if (horizontalSpeedSq < stopThresholdSq) {
-            this.setDeltaMovement(0.0d, current.y, 0.0d);
-            return;
-        }
-
-        double multiplier = 0.98d;
-        this.setDeltaMovement(current.x * multiplier, current.y, current.z * multiplier);
-    }
-
     @Override
     public void tick() {
         super.tick();
 
-        boolean isLead = this.isLeadCar();
-
-        // only variant 0 (steam loco) responds to player drive inputs.
-        if (this.getVariant() == 0 && this.getFirstPassenger() instanceof Player player) {
-            float forwardInput = player.zza;
-
-            TrainCar targetLead = (this.assembly != null && !this.assembly.getCars().isEmpty())
-                    ? this.assembly.getCars().get(0)
-                    : this;
-
-            if (forwardInput > 0.0f) {
-                targetLead.accelerate(false);
-            } else if (forwardInput < 0.0f) {
-                targetLead.accelerate(true);
-            } else {
-                targetLead.applyCoastingFriction();
-            }
-        } else if (isLead) {
-            applyCoastingFriction();
-        }
-
-        if (isLead) {
-            Vec3 movement = this.getDeltaMovement();
-
-            if (!canMoveInDirection(movement)) {
-                movement = Vec3.ZERO;
-                this.setDeltaMovement(Vec3.ZERO);
-            }
-
-            this.move(MoverType.SELF, movement);
-        } else {
-            this.setDeltaMovement(Vec3.ZERO);
-        }
-
         this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
 
+        // server side running
         if (!this.level().isClientSide()) {
             this.hasImpulse = true;
 
@@ -581,16 +381,6 @@ public class TrainCar extends Entity {
                     if (nearbyCar != this && (this.getAssembly() == null || this.getAssembly() != nearbyCar.getAssembly()) && nearbyCar.hasOpenCoupler()) {
                         this.tryCoupleWith(nearbyCar);
                     }
-                }
-            }
-
-            if (this.assembly != null) {
-                // recording breadcrumbs
-                this.recordPositions();
-
-                if (this.assembly.getCars().indexOf(this) == 0) {
-                    // tick the assembly
-                    this.assembly.tickAssembly();
                 }
             }
         }

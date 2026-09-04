@@ -2,6 +2,7 @@ package com.ashenlight.ashenrail;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,8 +20,6 @@ public class TrainAssembly {
 
         movingCar.setAssembly(this);
         idleCar.setAssembly(this);
-
-        initializeBreadcrumbs();
     }
 
     @Override
@@ -62,7 +61,6 @@ public class TrainAssembly {
         if (!cars.contains(car)) {
             cars.add(0, car);
             car.setAssembly(this);
-            initializeBreadcrumbs();
         }
     }
 
@@ -70,7 +68,6 @@ public class TrainAssembly {
         if (!cars.contains(car)) {
             cars.add(car);
             car.setAssembly(this);
-            initializeBreadcrumbs();
         }
     }
 
@@ -85,69 +82,6 @@ public class TrainAssembly {
                 remainingCar.setAssembly(null);
             }
             cars.clear();
-        }
-    }
-
-    // syncing movement
-
-    public void initializeBreadcrumbs() {
-        if (cars.isEmpty()) return;
-
-        TrainCar leadCar = this.getLead();
-
-        double totalConsistLength = (cars.size() - 1) * TARGET_SPACING;
-
-        leadCar.populateInitialBreadcrumbs(totalConsistLength, 0.25d);
-    }
-
-    public boolean isMovingForward() {
-        if (cars.isEmpty()) return true;
-
-        TrainCar head = cars.get(0);
-        TrainCar tail = cars.get(cars.size()-1);
-
-        Vec3 movement = head.getDeltaMovement();
-
-        if (movement.lengthSqr() < 0.0001) {
-            return true;
-        }
-
-        Vec3 posDiff = head.position().subtract(tail.position());
-
-        if (posDiff.lengthSqr() < 0.0001) {
-            return true;
-        }
-
-        Vec3 assemblyForward = posDiff.normalize();
-
-        return movement.dot(assemblyForward) >= 0;
-    }
-
-    public void tickAssembly() {
-        if (cars.size() < 2) return;
-
-        boolean movingForward = isMovingForward();
-
-        TrainCar leadCar = this.getLead();
-
-        for (int i = 1; i < cars.size(); i++) {
-            TrainCar follower = cars.get(i);
-
-            double targetDistance = leadCar.getTotalDistanceTraveled() - (i * TARGET_SPACING);
-
-            TrainCar.Breadcrumb targetPoint = leadCar.sampleBreadcrumb(targetDistance);
-
-            if (targetPoint != null) {
-                follower.moveTo(
-                    targetPoint.position().x,
-                    targetPoint.position().y,
-                    targetPoint.position().z,
-                    follower.getYRot(),
-                    follower.getXRot()
-                );
-
-                follower.hasImpulse = true;
-            }
         }
     }
 }

@@ -2,6 +2,7 @@ package com.ashenlight.ashenrail;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.food.FoodProperties;
@@ -14,9 +15,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -28,6 +31,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 
 
@@ -144,12 +148,32 @@ public class AshenRail
         }
     }
 
+    // DEBUGGING - methods to help with debugging.
+
     public static void logInGame(Level level, String message) {
         if (level != null && !level.isClientSide() && level.getServer() != null) {
             level.getServer().getPlayerList().broadcastSystemMessage(
                     Component.literal("[Debug] " + message),
                     false
             );
+        }
+    }
+
+    public static void spawnDebugParticle(Level level, Vec3 pos, float r, float g, float b, float scale) {
+        DustParticleOptions particleData = new DustParticleOptions(new Vector3f(r, g, b), scale);
+
+        level.addParticle(
+                particleData,
+                pos.x, pos.y, pos.z,
+                0.0, 0.0, 0.0
+        );
+    }
+
+    // ticking for debugging
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+
         }
     }
 }
