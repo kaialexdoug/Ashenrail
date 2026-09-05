@@ -52,33 +52,12 @@ public class TrackBlock extends Block {
 
     // making the segment
 
-    public void initializeSegment(Level level, BlockPos pos, BlockState state) {
-        // initializing the segment
-
-        Direction.Axis axis = state.getValue(AXIS);
-
-        Vec3 posA;
-        Vec3 posB;
-
-        if (axis == Direction.Axis.X) {
-            posA = new Vec3(pos.getX(), pos.getY(), pos.getZ() + 0.5d);
-            posB = new Vec3(pos.getX() + 1.0d, pos.getY(), pos.getZ() + 0.5d);
-        } else {
-            posA = new Vec3(pos.getX() + 0.5d, pos.getY(), pos.getZ());
-            posB = new Vec3(pos.getX() + 0.5d, pos.getY(), pos.getZ() + 1.0d);
-        }
-
-        TrackGraph.path(/*make parameters*/);
-    }
-
-
-
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
 
         if (!level.isClientSide) {
-            initializeSegment(level, pos, state);
+            TrackGraph.path(level, pos, state);
         }
     }
 }
