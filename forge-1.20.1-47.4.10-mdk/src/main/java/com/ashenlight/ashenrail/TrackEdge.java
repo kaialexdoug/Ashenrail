@@ -7,9 +7,9 @@ public class TrackEdge {
     public TrackNode nodeB;
 
     public TrackEdge(TrackNode nodeA, TrackNode nodeB) {
-        this.length = nodeA.position.distanceTo(nodeB.position);
-
         this.nodeA = nodeA;
         this.nodeB = nodeB;
+
+        this.length = nodeA.position.distanceTo(nodeB.position);
     }
 }
