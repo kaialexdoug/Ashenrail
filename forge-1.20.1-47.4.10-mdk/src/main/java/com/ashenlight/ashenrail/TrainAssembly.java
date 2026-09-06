@@ -8,7 +8,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
-import static com.ashenlight.ashenrail.AshenRail.logInGame;
 import static com.ashenlight.ashenrail.TrainCar.*;
 
 public class TrainAssembly {

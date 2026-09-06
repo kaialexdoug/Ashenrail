@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.ashenlight.ashenrail.AshenRail.*;
+import static com.ashenlight.ashenrail.Debug.logInGame;
 
 public class TrainCar extends Entity {
 

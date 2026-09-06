@@ -147,33 +147,4 @@ public class AshenRail
             LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
         }
     }
-
-    // DEBUGGING - methods to help with debugging.
-
-    public static void logInGame(Level level, String message) {
-        if (level != null && !level.isClientSide() && level.getServer() != null) {
-            level.getServer().getPlayerList().broadcastSystemMessage(
-                    Component.literal("[Debug] " + message),
-                    false
-            );
-        }
-    }
-
-    public static void spawnDebugParticle(Level level, Vec3 pos, float r, float g, float b, float scale) {
-        DustParticleOptions particleData = new DustParticleOptions(new Vector3f(r, g, b), scale);
-
-        level.addParticle(
-                particleData,
-                pos.x, pos.y, pos.z,
-                0.0, 0.0, 0.0
-        );
-    }
-
-    // ticking for debugging
-    @SubscribeEvent
-    public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-
-        }
-    }
 }

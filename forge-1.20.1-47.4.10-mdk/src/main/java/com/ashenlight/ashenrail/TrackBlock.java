@@ -60,4 +60,14 @@ public class TrackBlock extends Block {
             TrackGraph.path(level, pos, state);
         }
     }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            if (!level.isClientSide) {
+                TrackGraph.remove(level, pos, state);
+            }
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
+    }
 }
