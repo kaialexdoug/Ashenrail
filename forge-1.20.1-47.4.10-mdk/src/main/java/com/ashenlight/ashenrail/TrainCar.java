@@ -363,24 +363,139 @@ public class TrainCar extends Entity {
         this.assembly = assembly;
     }
 
+    // node system intergration
+
+    private TrackEdge currentEdge;
+    private double distanceAlongEdge;
+
+    public boolean onEdge() {
+        return this.currentEdge != null;
+    }
+
+    public void spawnOnEdge(TrackEdge edge, Vec3 spawnPos, float yaw) {
+        if (edge == null) return;
+
+        this.currentEdge = edge;
+
+        Vec3 start = edge.nodeA.position;
+        this.distanceAlongEdge = start.distanceTo(spawnPos);
+
+        this.setYRot(yaw);
+        this.yRotO = yaw;
+        this.setXRot(0.0f);
+        this.xRotO = 0.0f;
+
+        this.currentEdge.addTrainCar(this);
+        setPositionFromEdge();
+    }
+
+    public void setPositionFromEdge() {
+        if (this.currentEdge == null) return;
+
+        Vec3 start = this.currentEdge.nodeA.position;
+        Vec3 end = this.currentEdge.nodeB.position;
+
+        double totalLength = this.currentEdge.length;
+        double t = totalLength > 0 ? (this.distanceAlongEdge / totalLength) : 0.0;
+        t = Math.max(0.0, Math.min(1.0, t));
+
+        Vec3 targetPos = start.lerp(end, t);
+
+        // Vec3 oldPos = this.position();
+        // Vec3 velocity = targetPos.subtract(oldPos);
+
+        this.setPos(targetPos.x, targetPos.y, targetPos.z);
+        // this.setDeltaMovement(velocity);
+        this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
+
+        this.hasImpulse = true;
+        this.markHurt();
+    }
+
+    public double getDistanceAlongEdge() {
+        return this.distanceAlongEdge;
+    }
+
+    // ensuring the train car travels in the right direction
+    public double getEdgeAlignment() {
+        if (this.currentEdge == null) return 1.0;
+
+        Vec3 edgeVector = this.currentEdge.nodeB.position
+                .subtract(this.currentEdge.nodeA.position)
+                .normalize();
+
+        Vec3 forwardVector = this.getLookAngle();
+
+        double dot = edgeVector.dot(forwardVector);
+
+        return (dot >= 0) ? 1.0 : -1.0;
+    }
+
+    // movement
+
+    private static final double MAX_SPEED = 0.4f;
+    private static final double ACCELERATION = 0.01d;
+    private double speed = 0.0d;
+
+    public void accelerate(double throttle) {
+        double alignment = getEdgeAlignment();
+        this.speed += (throttle * alignment) * ACCELERATION;
+        this.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, this.speed));
+    }
+
+    public void applyCoastingFriction() {
+        final double FRICTION = 0.98d;
+
+        if (this.speed != 0) {
+            this.speed *= FRICTION;
+            if (Math.abs(this.speed) < 0.01d) {
+                this.speed = 0.0d;
+            }
+        }
+    }
+
+    public void processInput(Player player) {
+        float forwardInput = player.zza;
+
+        if (forwardInput > 0) {
+            accelerate(1);
+        } else if (forwardInput < 0) {
+            accelerate(-1);
+        } else {
+            applyCoastingFriction();
+        }
+    }
+
+    public void updatePosition() {
+        this.distanceAlongEdge += this.speed;
+        this.currentEdge.updateCarPosition(this);
+        setPositionFromEdge();
+    }
+
     @Override
     public void tick() {
         super.tick();
 
-        this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
+        if (this.onEdge()) {
+            // movement
+            if (this.isLocomotive() && this.getFirstPassenger() instanceof Player player) {
+                processInput(player);
+            } else {
+                applyCoastingFriction();
+            }
 
-        // server side running
-        if (!this.level().isClientSide()) {
-            this.hasImpulse = true;
+            updatePosition();
 
-            // coupling listener
-            if (this.hasOpenCoupler()) {
-                AABB searchBox = this.getBoundingBox().inflate(1.5d);
-                List<TrainCar> nearbyCars = this.level().getEntitiesOfClass(TrainCar.class, searchBox);
+            if (!this.level().isClientSide) {
+                // coupling listener
+                if (this.hasOpenCoupler()) {
+                    AABB searchBox = this.getBoundingBox().inflate(1.5d);
+                    List<TrainCar> nearbyCars = this.level().getEntitiesOfClass(TrainCar.class, searchBox);
 
-                for (TrainCar nearbyCar : nearbyCars) {
-                    if (nearbyCar != this && (this.getAssembly() == null || this.getAssembly() != nearbyCar.getAssembly()) && nearbyCar.hasOpenCoupler()) {
-                        this.tryCoupleWith(nearbyCar);
+                    for (TrainCar nearbyCar : nearbyCars) {
+                        if (nearbyCar != this && (this.getAssembly() == null || this.getAssembly() != nearbyCar.getAssembly()) && nearbyCar.hasOpenCoupler()) {
+                            this.tryCoupleWith(nearbyCar);
+                        }
                     }
                 }
             }

@@ -10,6 +10,11 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.fml.common.Mod;
+
+import static com.ashenlight.ashenrail.Debug.logInGame;
+import static com.ashenlight.ashenrail.TrackBlock.AXIS;
 
 public class TrainCarItem extends Item {
     private final int variantId;
@@ -26,35 +31,22 @@ public class TrainCarItem extends Item {
         Player player = context.getPlayer();
         BlockState state = level.getBlockState(pos);
 
-        if (state.getBlock() instanceof TrackBlock) {
-            if (!level.isClientSide()) {
-
+        if (level.getBlockState(pos).getBlock() instanceof TrackBlock && !level.isClientSide) {
+            TrackEdge edge = TrackGraph.edgesByPos.get(pos.immutable());
+            if (edge != null) {
                 TrainCar trainCar = new TrainCar(ModEntities.TRAIN_CAR.get(), level);
+                trainCar.setVariant(variantId); // this makes sure the right train car is being placed!
 
-                Direction.Axis trackAxis = state.hasProperty(TrackBlock.AXIS)
-                        ? state.getValue(TrackBlock.AXIS)
-                        : Direction.Axis.Z;
+                Direction.Axis axis = state.getValue(AXIS);
 
-                float finalYaw = getFinalYaw(context, player, trackAxis);
+                Vec3 spawnPos = new Vec3(pos.getX() + 0.5, pos.getY() + 0.0625, pos.getZ() + 0.5);
+                trainCar.spawnOnEdge(edge, spawnPos, getFinalYaw(context, player, axis));
 
-                trainCar.moveTo(
-                        pos.getX() + 0.5d,
-                        pos.getY() + 0.0625d,
-                        pos.getZ() + 0.5d,
-                        finalYaw,
-                        0.0f
-                );
-                trainCar.setVariant(this.variantId);
                 level.addFreshEntity(trainCar);
-
-                /*
-                if (context.getPlayer() != null && !context.getPlayer().getAbilities().instabuild) {
-                    context.getItemInHand().shrink(1);
-                }
-                */
+                return InteractionResult.SUCCESS;
             }
-            return InteractionResult.sidedSuccess(level.isClientSide());
         }
+
         return InteractionResult.PASS;
     }
 
