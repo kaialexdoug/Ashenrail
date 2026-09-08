@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
@@ -45,6 +46,17 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
     @Override
     public void render(TrainCar trainCar, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        // positioning train car and passenger
+        double interpolatedDistance = trainCar.getInterpolatedDistance(partialTicks);
+        trainCar.setPositionFromEdge(interpolatedDistance);
+
+        if (trainCar.isVehicle()) {
+            for (Entity passenger : trainCar.getPassengers()) {
+                trainCar.positionRider(passenger, Entity::setPos);
+            }
+        }
+
+        // rendering the model
         poseStack.pushPose();
 
         poseStack.translate(0.0D, 1.5, 0.0D);

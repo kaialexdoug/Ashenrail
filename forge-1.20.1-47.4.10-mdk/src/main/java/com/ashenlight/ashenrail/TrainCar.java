@@ -34,10 +34,13 @@ import java.util.List;
 
 import static com.ashenlight.ashenrail.AshenRail.*;
 import static com.ashenlight.ashenrail.Debug.logInGame;
+import static com.ashenlight.ashenrail.Debug.renderParticle;
 
 public class TrainCar extends Entity {
 
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DISTANCE_ALONG_EDGE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
+
     private static final Logger log = LoggerFactory.getLogger(TrainCar.class);
 
     public TrainCar(EntityType<?> type, Level level) {
@@ -48,6 +51,7 @@ public class TrainCar extends Entity {
     @Override
     protected void defineSynchedData() {
         this.entityData.define(VARIANT, 0);
+        this.entityData.define(DISTANCE_ALONG_EDGE, 0.0f);
     }
 
     @Override
@@ -367,6 +371,7 @@ public class TrainCar extends Entity {
 
     private TrackEdge currentEdge;
     private double distanceAlongEdge;
+    private double prevDistanceAlongEdge;
 
     public boolean onEdge() {
         return this.currentEdge != null;
@@ -390,30 +395,32 @@ public class TrainCar extends Entity {
     }
 
     public void setPositionFromEdge() {
+        setPositionFromEdge(this.distanceAlongEdge);
+    }
+
+    public void setPositionFromEdge(double distance) {
         if (this.currentEdge == null) return;
 
         Vec3 start = this.currentEdge.nodeA.position;
         Vec3 end = this.currentEdge.nodeB.position;
 
         double totalLength = this.currentEdge.length;
-        double t = totalLength > 0 ? (this.distanceAlongEdge / totalLength) : 0.0;
+        double t = totalLength > 0 ? (distance / totalLength) : 0.0;
         t = Math.max(0.0, Math.min(1.0, t));
 
         Vec3 targetPos = start.lerp(end, t);
 
-        // Vec3 oldPos = this.position();
-        // Vec3 velocity = targetPos.subtract(oldPos);
-
         this.setPos(targetPos.x, targetPos.y, targetPos.z);
-        // this.setDeltaMovement(velocity);
-        this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
 
-        this.hasImpulse = true;
-        this.markHurt();
+        this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
     }
 
     public double getDistanceAlongEdge() {
         return this.distanceAlongEdge;
+    }
+
+    public double getInterpolatedDistance(float partialTick) {
+        return Mth.lerp(partialTick, this.prevDistanceAlongEdge, this.distanceAlongEdge);
     }
 
     // ensuring the train car travels in the right direction
@@ -468,6 +475,8 @@ public class TrainCar extends Entity {
 
     public void updatePosition() {
         this.distanceAlongEdge += this.speed;
+        this.entityData.set(DISTANCE_ALONG_EDGE, (float)distanceAlongEdge);
+
         this.currentEdge.updateCarPosition(this);
         setPositionFromEdge();
     }
@@ -477,16 +486,18 @@ public class TrainCar extends Entity {
         super.tick();
 
         if (this.onEdge()) {
-            // movement
-            if (this.isLocomotive() && this.getFirstPassenger() instanceof Player player) {
-                processInput(player);
-            } else {
-                applyCoastingFriction();
-            }
-
-            updatePosition();
-
             if (!this.level().isClientSide) {
+                // SERVER SIDE
+                // movement
+                if (this.isLocomotive() && this.getFirstPassenger() instanceof Player player) {
+                    processInput(player);
+                } else {
+                    applyCoastingFriction();
+                }
+
+                updatePosition();
+                this.hasImpulse = true;
+
                 // coupling listener
                 if (this.hasOpenCoupler()) {
                     AABB searchBox = this.getBoundingBox().inflate(1.5d);
@@ -498,6 +509,12 @@ public class TrainCar extends Entity {
                         }
                     }
                 }
+
+            } else {
+                // CLIENT SIDE
+                // syncing server side movement with client side
+                prevDistanceAlongEdge = this.distanceAlongEdge;
+                this.distanceAlongEdge = (double)this.entityData.get(DISTANCE_ALONG_EDGE);
             }
         }
     }

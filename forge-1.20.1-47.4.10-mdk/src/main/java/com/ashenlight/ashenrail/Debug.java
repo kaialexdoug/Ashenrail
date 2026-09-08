@@ -20,6 +20,20 @@ public class Debug {
         }
     }
 
+    public static void renderParticle(Level level, Vec3 position, float r, float g, float b, float scale) {
+        Vector3f color = new Vector3f(r, g, b);
+
+        DustParticleOptions particleOptions = new DustParticleOptions(color, scale);
+
+        level.addParticle(
+                particleOptions,
+                position.x,
+                position.y,
+                position.z,
+                0.0d, 0.0d, 0.0d
+        );
+    }
+
     public static void debugRenderEdge(Level level, TrackEdge edge) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
