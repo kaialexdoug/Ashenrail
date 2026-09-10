@@ -40,6 +40,7 @@ public class TrainCar extends Entity {
 
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DISTANCE_ALONG_EDGE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<BlockPos> BLOCK_POS_KEY = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.BLOCK_POS);
 
     private static final Logger log = LoggerFactory.getLogger(TrainCar.class);
 
@@ -52,6 +53,7 @@ public class TrainCar extends Entity {
     protected void defineSynchedData() {
         this.entityData.define(VARIANT, 0);
         this.entityData.define(DISTANCE_ALONG_EDGE, 0.0f);
+        this.entityData.define(BLOCK_POS_KEY, BlockPos.ZERO);
     }
 
     @Override
@@ -377,8 +379,10 @@ public class TrainCar extends Entity {
         return this.currentEdge != null;
     }
 
-    public void spawnOnEdge(TrackEdge edge, Vec3 spawnPos, float yaw) {
+    public void spawnOnEdge(TrackEdge edge, Vec3 spawnPos, BlockPos pos, float yaw) {
         if (edge == null) return;
+
+        this.entityData.set(BLOCK_POS_KEY, pos);
 
         this.currentEdge = edge;
 
@@ -485,9 +489,9 @@ public class TrainCar extends Entity {
     public void tick() {
         super.tick();
 
-        if (this.onEdge()) {
-            if (!this.level().isClientSide) {
-                // SERVER SIDE
+        if (!this.level().isClientSide) {
+            // SERVER SIDE
+            if (this.onEdge()) {
                 // movement
                 if (this.isLocomotive() && this.getFirstPassenger() instanceof Player player) {
                     processInput(player);
@@ -497,6 +501,9 @@ public class TrainCar extends Entity {
 
                 updatePosition();
                 this.hasImpulse = true;
+
+                System.out.println("server distance: " + this.getDistanceAlongEdge());
+                System.out.println("server edge: " + this.currentEdge);
 
                 // coupling listener
                 if (this.hasOpenCoupler()) {
@@ -509,13 +516,18 @@ public class TrainCar extends Entity {
                         }
                     }
                 }
-
-            } else {
-                // CLIENT SIDE
-                // syncing server side movement with client side
-                prevDistanceAlongEdge = this.distanceAlongEdge;
-                this.distanceAlongEdge = (double)this.entityData.get(DISTANCE_ALONG_EDGE);
             }
+
+        } else {
+            // CLIENT SIDE
+            // syncing server side movement with client side
+            prevDistanceAlongEdge = this.distanceAlongEdge;
+            this.distanceAlongEdge = (double)this.entityData.get(DISTANCE_ALONG_EDGE);
+
+
+            System.out.println("client distance: " + this.distanceAlongEdge);
+            System.out.println("client edge: " + currentEdge);
+            System.out.println("Block Pos Key: " + this.entityData.get(BLOCK_POS_KEY));
         }
     }
 }

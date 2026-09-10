@@ -46,10 +46,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
     @Override
     public void render(TrainCar trainCar, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        // positioning train car and passenger
-        double interpolatedDistance = trainCar.getInterpolatedDistance(partialTicks);
-        trainCar.setPositionFromEdge(interpolatedDistance);
-
+        // positioning passenger
         if (trainCar.isVehicle()) {
             for (Entity passenger : trainCar.getPassengers()) {
                 trainCar.positionRider(passenger, Entity::setPos);
@@ -73,5 +70,4 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
         super.render(trainCar, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
-
 }

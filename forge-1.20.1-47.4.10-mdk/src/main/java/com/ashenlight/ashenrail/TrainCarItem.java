@@ -40,7 +40,7 @@ public class TrainCarItem extends Item {
                 Direction.Axis axis = state.getValue(AXIS);
 
                 Vec3 spawnPos = new Vec3(pos.getX() + 0.5, pos.getY() + 0.0625, pos.getZ() + 0.5);
-                trainCar.spawnOnEdge(edge, spawnPos, getFinalYaw(context, player, axis));
+                trainCar.spawnOnEdge(edge, spawnPos, pos, getFinalYaw(context, player, axis));
 
                 level.addFreshEntity(trainCar);
                 return InteractionResult.SUCCESS;

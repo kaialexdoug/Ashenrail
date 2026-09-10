@@ -68,6 +68,5 @@ public class Debug {
                     0.0
             );
         }
-
     }
 }
