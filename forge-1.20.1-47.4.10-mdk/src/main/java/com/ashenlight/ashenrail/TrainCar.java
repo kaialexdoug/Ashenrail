@@ -3,6 +3,7 @@ package com.ashenlight.ashenrail;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -31,6 +32,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import static com.ashenlight.ashenrail.AshenRail.*;
 import static com.ashenlight.ashenrail.Debug.logInGame;
@@ -40,7 +42,17 @@ public class TrainCar extends Entity {
 
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DISTANCE_ALONG_EDGE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<BlockPos> BLOCK_POS_KEY = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.BLOCK_POS);
+
+    // TrackEdge itself is never networked. Instead we ship the block span the edge covers,
+    // which is exact, tiny, and lets the client rebuild an identical edge with pure math.
+    // NOTE: define order matters - these are applied to the client in id order, so the axis
+    // must land before the endpoints and EDGE_END must be last (it triggers the rebuild).
+    private static final EntityDataAccessor<Integer> EDGE_AXIS = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<BlockPos>> EDGE_START = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Optional<BlockPos>> EDGE_END = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+
+    private static final int AXIS_X = 0;
+    private static final int AXIS_Z = 1;
 
     private static final Logger log = LoggerFactory.getLogger(TrainCar.class);
 
@@ -53,7 +65,9 @@ public class TrainCar extends Entity {
     protected void defineSynchedData() {
         this.entityData.define(VARIANT, 0);
         this.entityData.define(DISTANCE_ALONG_EDGE, 0.0f);
-        this.entityData.define(BLOCK_POS_KEY, BlockPos.ZERO);
+        this.entityData.define(EDGE_AXIS, AXIS_X);
+        this.entityData.define(EDGE_START, Optional.empty());
+        this.entityData.define(EDGE_END, Optional.empty());
     }
 
     @Override
@@ -62,11 +76,35 @@ public class TrainCar extends Entity {
             int savedVariant = compoundTag.getInt("Variant");
             setVariant(savedVariant);
         }
+
+        // TrackGraph.edgesByPos is rebuilt from block placements only, so it is empty after a
+        // world reload. Rebuild this car's edge from its own saved span instead of relying on it.
+        if (compoundTag.contains("EdgeStart") && compoundTag.contains("EdgeEnd")) {
+            BlockPos start = NbtUtils.readBlockPos(compoundTag.getCompound("EdgeStart"));
+            BlockPos end = NbtUtils.readBlockPos(compoundTag.getCompound("EdgeEnd"));
+            Direction.Axis axis = compoundTag.getInt("EdgeAxis") == AXIS_X ? Direction.Axis.X : Direction.Axis.Z;
+
+            TrackEdge known = TrackGraph.edgesByPos.get(start);
+            this.currentEdge = (known != null) ? known : buildEdge(start, end, axis);
+
+            this.distanceAlongEdge = compoundTag.getDouble("DistanceAlongEdge");
+            this.prevDistanceAlongEdge = this.distanceAlongEdge;
+
+            this.currentEdge.addTrainCar(this);
+            publishEdgeToClients();
+        }
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compoundTag) {
         compoundTag.putInt("Variant", getVariant());
+
+        if (this.currentEdge != null) {
+            compoundTag.put("EdgeStart", NbtUtils.writeBlockPos(this.currentEdge.startPos));
+            compoundTag.put("EdgeEnd", NbtUtils.writeBlockPos(this.currentEdge.endPos));
+            compoundTag.putInt("EdgeAxis", this.currentEdge.axis == Direction.Axis.X ? AXIS_X : AXIS_Z);
+            compoundTag.putDouble("DistanceAlongEdge", this.distanceAlongEdge);
+        }
     }
 
     @Override
@@ -149,7 +187,8 @@ public class TrainCar extends Entity {
 
     @Override
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
-        super.positionRider(passenger, moveFunction);
+        // called once per tick from Entity.rideTick(), never from the renderer - the passenger
+        // gets its own xOld -> x frame interpolation exactly like the car does.
         if (this.hasPassenger(passenger)) {
             Vec3 offset = getSeatOffsetForVariant(getVariant());
 
@@ -350,6 +389,10 @@ public class TrainCar extends Entity {
     public void remove(Entity.RemovalReason reason) {
         this.uncoupleAll();
 
+        if (this.currentEdge != null) {
+            this.currentEdge.removeTrainCar(this);
+        }
+
         if (this.assembly != null) {
             this.assembly.removeCar(this);
         }
@@ -379,15 +422,17 @@ public class TrainCar extends Entity {
         return this.currentEdge != null;
     }
 
-    public void spawnOnEdge(TrackEdge edge, Vec3 spawnPos, BlockPos pos, float yaw) {
+    public void spawnOnEdge(TrackEdge edge, Vec3 spawnPos, float yaw) {
         if (edge == null) return;
-
-        this.entityData.set(BLOCK_POS_KEY, pos);
 
         this.currentEdge = edge;
 
-        Vec3 start = edge.nodeA.position;
-        this.distanceAlongEdge = start.distanceTo(spawnPos);
+        // project onto the edge rather than measuring straight-line distance to node A, so the
+        // block-centre spawn offset (and the 1/16 y nudge) doesn't leak into the distance.
+        Vec3 direction = edge.nodeB.position.subtract(edge.nodeA.position).normalize();
+        this.distanceAlongEdge = Mth.clamp(
+                spawnPos.subtract(edge.nodeA.position).dot(direction), 0.0d, edge.length);
+        this.prevDistanceAlongEdge = this.distanceAlongEdge;
 
         this.setYRot(yaw);
         this.yRotO = yaw;
@@ -396,6 +441,79 @@ public class TrainCar extends Entity {
 
         this.currentEdge.addTrainCar(this);
         setPositionFromEdge();
+
+        publishEdgeToClients();
+    }
+
+    // ---- client-side edge resolution ---------------------------------------------------
+    //
+    // The client can't share the server's TrackEdge instances, so it is handed the edge's
+    // block span and rebuilds an equal one locally. This is pure arithmetic on two BlockPos:
+    // no level access, no isContiguous() scan, nothing that scales with segment length.
+
+    private static TrackEdge buildEdge(BlockPos start, BlockPos end, Direction.Axis axis) {
+        return new TrackEdge(
+                new TrackNode(TrackGraph.locateNodeA(start, axis)),
+                new TrackNode(TrackGraph.locateNodeB(end, axis)),
+                start,
+                end,
+                axis
+        );
+    }
+
+    private void publishEdgeToClients() {
+        if (this.currentEdge == null) return;
+
+        this.entityData.set(EDGE_AXIS, this.currentEdge.axis == Direction.Axis.X ? AXIS_X : AXIS_Z);
+        this.entityData.set(EDGE_START, Optional.of(this.currentEdge.startPos));
+        this.entityData.set(EDGE_END, Optional.of(this.currentEdge.endPos));
+        this.entityData.set(DISTANCE_ALONG_EDGE, (float) this.distanceAlongEdge);
+    }
+
+    private void rebuildEdgeFromSyncedData() {
+        Optional<BlockPos> start = this.entityData.get(EDGE_START);
+        Optional<BlockPos> end = this.entityData.get(EDGE_END);
+
+        if (start.isEmpty() || end.isEmpty()) {
+            this.currentEdge = null;
+            return;
+        }
+
+        Direction.Axis axis = this.entityData.get(EDGE_AXIS) == AXIS_X ? Direction.Axis.X : Direction.Axis.Z;
+        this.currentEdge = buildEdge(start.get(), end.get(), axis);
+
+        // land on the exact edge position immediately, and clear the interpolation history so
+        // the first rendered frame doesn't slide in from wherever the spawn packet put us.
+        this.distanceAlongEdge = this.entityData.get(DISTANCE_ALONG_EDGE);
+        this.prevDistanceAlongEdge = this.distanceAlongEdge;
+        setPositionFromEdge();
+        this.setOldPosAndRot();
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+
+        if (!this.level().isClientSide) return;
+
+        if (EDGE_START.equals(key) || EDGE_END.equals(key) || EDGE_AXIS.equals(key)) {
+            rebuildEdgeFromSyncedData();
+        }
+    }
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps, boolean teleport) {
+        // Entity's default lerpTo is a hard snap to the last position packet (only LivingEntity
+        // actually interpolates), and those packets land between ticks, every updateInterval
+        // ticks. That snap is what causes the rubberbanding: it fights the position we derive
+        // from the edge and wrecks the renderer's xOld -> x lerp. The edge is authoritative
+        // whenever we have one; fall back to vanilla behaviour only if we somehow don't.
+        if (this.currentEdge == null) {
+            this.setPos(x, y, z);
+        }
+
+        this.setYRot(yaw);
+        this.setXRot(pitch);
     }
 
     public void setPositionFromEdge() {
@@ -478,8 +596,17 @@ public class TrainCar extends Entity {
     }
 
     public void updatePosition() {
-        this.distanceAlongEdge += this.speed;
-        this.entityData.set(DISTANCE_ALONG_EDGE, (float)distanceAlongEdge);
+        this.prevDistanceAlongEdge = this.distanceAlongEdge;
+
+        // clamp the distance itself, not just the rendered position. Letting it run past the
+        // end of the edge leaves the car pinned at the node while the counter keeps climbing,
+        // so reversing does nothing until it has wound all the way back down.
+        this.distanceAlongEdge = Mth.clamp(this.distanceAlongEdge + this.speed, 0.0d, this.currentEdge.length);
+        if (this.distanceAlongEdge <= 0.0d || this.distanceAlongEdge >= this.currentEdge.length) {
+            this.speed = 0.0d;
+        }
+
+        this.entityData.set(DISTANCE_ALONG_EDGE, (float) this.distanceAlongEdge);
 
         this.currentEdge.updateCarPosition(this);
         setPositionFromEdge();
@@ -500,10 +627,6 @@ public class TrainCar extends Entity {
                 }
 
                 updatePosition();
-                this.hasImpulse = true;
-
-                System.out.println("server distance: " + this.getDistanceAlongEdge());
-                System.out.println("server edge: " + this.currentEdge);
 
                 // coupling listener
                 if (this.hasOpenCoupler()) {
@@ -520,14 +643,22 @@ public class TrainCar extends Entity {
 
         } else {
             // CLIENT SIDE
-            // syncing server side movement with client side
-            prevDistanceAlongEdge = this.distanceAlongEdge;
-            this.distanceAlongEdge = (double)this.entityData.get(DISTANCE_ALONG_EDGE);
+            // The server sends DISTANCE_ALONG_EDGE every tick it changes (SynchedEntityData is
+            // flushed whenever it's dirty). Turn that into a world position exactly ONCE per
+            // tick, here - ClientLevel calls setOldPosAndRot() immediately before tick(), so
+            // the renderer gets a free, correct xOld -> x lerp across the frames in between.
+            // Never do this from the renderer: render() runs after the frame transform is
+            // computed and many times per tick, which is what caused the flickering.
+            if (this.currentEdge == null) {
+                rebuildEdgeFromSyncedData();
+            }
 
+            this.prevDistanceAlongEdge = this.distanceAlongEdge;
+            this.distanceAlongEdge = this.entityData.get(DISTANCE_ALONG_EDGE);
 
-            System.out.println("client distance: " + this.distanceAlongEdge);
-            System.out.println("client edge: " + currentEdge);
-            System.out.println("Block Pos Key: " + this.entityData.get(BLOCK_POS_KEY));
+            if (this.currentEdge != null) {
+                setPositionFromEdge();
+            }
         }
     }
 }

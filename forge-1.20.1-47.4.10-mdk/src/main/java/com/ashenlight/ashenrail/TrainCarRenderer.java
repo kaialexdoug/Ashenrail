@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
 
 public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
@@ -46,12 +45,11 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
     @Override
     public void render(TrainCar trainCar, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        // positioning passenger
-        if (trainCar.isVehicle()) {
-            for (Entity passenger : trainCar.getPassengers()) {
-                trainCar.positionRider(passenger, Entity::setPos);
-            }
-        }
+        // NOTE: nothing in here may move the car or its passengers. render() runs at frame rate,
+        // after the render transform has already been derived from the entity's tick position,
+        // so mutating position here fights that transform (and the chunk-section bookkeeping,
+        // which expects one move per tick). Passengers are seated from TrainCar.positionRider,
+        // driven once per tick by Entity.rideTick().
 
         // rendering the model
         poseStack.pushPose();

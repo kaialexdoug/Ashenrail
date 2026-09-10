@@ -24,8 +24,9 @@ public class TrackGraph {
 
     }
 
-    public static Vec3 locateNodeA(BlockPos pos, BlockState state) {
-        Direction.Axis axis = state.getValue(AXIS);
+    // axis-only overloads: the client rebuilds edges from synced data and must never
+    // touch the world to do it (no getBlockState, no chunk access, no scanning).
+    public static Vec3 locateNodeA(BlockPos pos, Direction.Axis axis) {
         if (axis == Direction.Axis.X) {
             return new Vec3(pos.getX(), pos.getY(), pos.getZ() + 0.5d);
         } else {
@@ -33,13 +34,20 @@ public class TrackGraph {
         }
     }
 
-    public static Vec3 locateNodeB(BlockPos pos, BlockState state) {
-        Direction.Axis axis = state.getValue(AXIS);
+    public static Vec3 locateNodeB(BlockPos pos, Direction.Axis axis) {
         if (axis == Direction.Axis.X) {
             return new Vec3(pos.getX() + 1d, pos.getY(), pos.getZ() + 0.5d);
         } else {
             return new Vec3(pos.getX() + 0.5d, pos.getY(), pos.getZ() + 1d);
         }
+    }
+
+    public static Vec3 locateNodeA(BlockPos pos, BlockState state) {
+        return locateNodeA(pos, state.getValue(AXIS));
+    }
+
+    public static Vec3 locateNodeB(BlockPos pos, BlockState state) {
+        return locateNodeB(pos, state.getValue(AXIS));
     }
 
     public static boolean isContiguous(Level level, BlockPos pos, BlockState state, int offset) {
@@ -99,16 +107,17 @@ public class TrackGraph {
 
         // cleanupEdges(startPos, endPos);
 
-        TrackEdge edge = new TrackEdge(new TrackNode(nodeALocation), new TrackNode(nodeBLocation));
+        TrackEdge edge = new TrackEdge(
+                new TrackNode(nodeALocation),
+                new TrackNode(nodeBLocation),
+                startPos,
+                endPos,
+                axis
+        );
 
         updateEdgesByPos(startPos, endPos, axis, edge);
 
         Debug.debugRenderEdge(level, edge);
-
-        edgesByPos.forEach((logPos, logEdge) -> {
-            System.out.println("pos: " + logPos + " -> edge: " + edge);
-        });
-        // logInGame(level, "Node A: " + edge.nodeA.position + "\nNode B: " + edge.nodeB.position + "\nEdge Length: " + edge.length);
     }
 
     public static void remove(Level level, BlockPos pos, BlockState state) {
