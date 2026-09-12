@@ -112,28 +112,6 @@ public class TrainCar extends Entity {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
-    public static final double DEFAULT_LENGTH = 4.0d;
-    public static final double  DEFAULT_WIDTH = 1.5d;
-
-    public static final double COUPLER_GAP = 0.5d;
-    public static final double TARGET_SPACING = DEFAULT_LENGTH + COUPLER_GAP;
-
-    protected AABB makeBoundingBox(double x, double y, double z) {
-        float yaw = (this.getYRot() % 360.0f + 360.0f) % 360.0f;
-        boolean facingEastWest = (yaw >= 45.0f && yaw < 135.0f) || (yaw >= 225.0f && yaw < 315.0f);
-
-        double halfX = facingEastWest ? DEFAULT_LENGTH / 2.0d : DEFAULT_WIDTH / 2.0d;
-        double halfZ = facingEastWest ? DEFAULT_WIDTH / 2.0d : DEFAULT_LENGTH / 2.0d;
-        double height = 2.0d;
-
-        double yOffset = 0.625d;
-
-        return new AABB(
-                x - halfX, y + yOffset, z - halfZ,
-                x + halfX, y + yOffset + height, z + halfZ
-        );
-    }
-
     @Override
     public void setYRot(float yRot) {
         super.setYRot(yRot);
@@ -178,11 +156,44 @@ public class TrainCar extends Entity {
         return InteractionResult.SUCCESS;
     }
 
+    // VARIANT RELATED STUFF
+
     private Vec3 getSeatOffsetForVariant(int variant) {
         return switch(variant) {
             case 0 -> new Vec3(0.0d, 0.5d, -1.0d);
             default -> new Vec3(0.0d, 0.5d, 0.0d);
         };
+    }
+
+    public static final double DEFAULT_LENGTH = 4.0d;
+    public static final double  DEFAULT_WIDTH = 1.5d;
+
+    public double getCarLength() {
+        return switch (this.getVariant()) {
+            case 0 -> 4.0d;
+            case 1 -> 4.0d;
+            default -> DEFAULT_LENGTH;
+        };
+    }
+
+    public double getCarWidth() {
+        return switch (this.getVariant()) {
+            case 0 -> 1.5d;
+            case 1 -> 1.5d;
+            default -> DEFAULT_WIDTH;
+        };
+    }
+
+    public int getVariant() {
+        return this.entityData.get(VARIANT);
+    }
+
+    public void setVariant(int newVariant) {
+        this.entityData.set(VARIANT, newVariant);
+    }
+
+    public boolean isLocomotive() {
+        return this.getVariant() == 0;
     }
 
     @Override
@@ -213,28 +224,25 @@ public class TrainCar extends Entity {
         this.spawnAtLocation(stackToDrop);
     }
 
-    public int getVariant() {
-        return this.entityData.get(VARIANT);
-    }
+    protected AABB makeBoundingBox(double x, double y, double z) {
+        float yaw = (this.getYRot() % 360.0f + 360.0f) % 360.0f;
+        boolean facingEastWest = (yaw >= 45.0f && yaw < 135.0f) || (yaw >= 225.0f && yaw < 315.0f);
 
-    public void setVariant(int newVariant) {
-        this.entityData.set(VARIANT, newVariant);
-    }
+        double halfX = facingEastWest ? this.getCarLength() / 2.0d : this.getCarWidth() / 2.0d;
+        double halfZ = facingEastWest ? this.getCarWidth() / 2.0d : this.getCarLength() / 2.0d;
+        double height = 2.0d;
 
-    public boolean isLeadCar() {
-        if (this.isAlone()) return false;
-        return this.assembly.getCars().get(0) == this;
-    }
+        double yOffset = 0.625d;
 
-    public boolean isAlone() {
-        return this.getAssembly() == null;
-    }
-
-    public boolean isLocomotive() {
-        return this.getVariant() == 0;
+        return new AABB(
+                x - halfX, y + yOffset, z - halfZ,
+                x + halfX, y + yOffset + height, z + halfZ
+        );
     }
 
     // coupling
+
+    public static final double COUPLER_GAP = 0.5d;
 
     private TrainCar frontCoupledCar = null;
     private TrainCar rearCoupledCar = null;
@@ -276,11 +284,13 @@ public class TrainCar extends Entity {
         Direction.Axis axis = this.getTrackAxis();
         boolean isZ = (axis == Direction.Axis.Z);
 
-        double thisCenter = isZ ? this.getZ() : this.getX();
-        double otherCenter = isZ ? other.getZ() : other.getX();
+        double thisCenter = this.getDistanceAlongEdge();
+        double otherCenter = other.getDistanceAlongEdge();
 
-        double distance = Math.abs(thisCenter - otherCenter);
-        double targetCenterDistance = TARGET_SPACING;
+        double distance = this.position().distanceTo(other.position());
+        double targetCenterDistance = (this.getCarLength() / 2.0d) + (other.getCarLength() / 2.0d) + COUPLER_GAP;
+
+        // UP TO HERE MODIFIED
 
         if (distance <= targetCenterDistance + 1.0d) {
             double deltaPos = otherCenter - thisCenter;
@@ -412,7 +422,16 @@ public class TrainCar extends Entity {
         this.assembly = assembly;
     }
 
-    // node system intergration
+    public boolean isAlone() {
+        return this.getAssembly() == null;
+    }
+
+    public boolean isLeadCar() {
+        if (this.isAlone()) return false;
+        return this.assembly.getCars().get(0) == this;
+    }
+
+    // node system integration
 
     private TrackEdge currentEdge;
     private double distanceAlongEdge;
@@ -539,10 +558,6 @@ public class TrainCar extends Entity {
 
     public double getDistanceAlongEdge() {
         return this.distanceAlongEdge;
-    }
-
-    public double getInterpolatedDistance(float partialTick) {
-        return Mth.lerp(partialTick, this.prevDistanceAlongEdge, this.distanceAlongEdge);
     }
 
     // ensuring the train car travels in the right direction
