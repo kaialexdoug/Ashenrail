@@ -13,6 +13,8 @@ import static com.ashenlight.ashenrail.TrainCar.*;
 public class TrainAssembly {
     private final List<TrainCar> cars = new ArrayList<>();
 
+    public double assemblySpeed = 0d;
+
     public TrainAssembly(TrainCar movingCar, TrainCar idleCar) {
         cars.add(movingCar);
         cars.add(idleCar);
@@ -56,14 +58,14 @@ public class TrainAssembly {
         return cars.size();
     }
 
-    public void addFront(TrainCar car) {
+    public void prepend(TrainCar car) {
         if (!cars.contains(car)) {
             cars.add(0, car);
             car.setAssembly(this);
         }
     }
 
-    public void addRear(TrainCar car) {
+    public void append(TrainCar car) {
         if (!cars.contains(car)) {
             cars.add(car);
             car.setAssembly(this);
@@ -82,6 +84,43 @@ public class TrainAssembly {
             }
             cars.clear();
         }
+    }
+
+    public void accelerate(double throttle) {
+        this.receivedInputThisTick = true;
+        double alignment = this.getLead().getEdgeAlignment();
+        this.assemblySpeed += (throttle * alignment) * TrainCar.ACCELERATION;
+        this.assemblySpeed = Math.max(-TrainCar.MAX_SPEED, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed));
+    }
+
+    public void applyCoastingFriction() {
+        if (this.assemblySpeed != 0) {
+            this.assemblySpeed *= TrainCar.FRICTION;
+            if (Math.abs(this.assemblySpeed) < 0.01d) {
+                this.assemblySpeed = 0.0d;
+            }
+        }
+    }
+
+    public void syncAssemblyMovement(TrainCar car) {
+        car.speed = this.assemblySpeed;
+    }
+
+    private boolean receivedInputThisTick = false;
+
+    public void tickAssembly() {
+        for (TrainCar car : this.cars) {
+            if (car.isLocomotive() && car.getFirstPassenger() instanceof Player player) {
+                car.processInput(player);
+            }
+            syncAssemblyMovement(car);
+        }
+
+        if (!this.receivedInputThisTick) {
+            applyCoastingFriction();
+        }
+
+        this.receivedInputThisTick = false;
     }
 }
 

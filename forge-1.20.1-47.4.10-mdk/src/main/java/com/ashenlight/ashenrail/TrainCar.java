@@ -284,95 +284,89 @@ public class TrainCar extends Entity {
         Direction.Axis axis = this.getTrackAxis();
         boolean isZ = (axis == Direction.Axis.Z);
 
-        double thisCenter = this.getDistanceAlongEdge();
-        double otherCenter = other.getDistanceAlongEdge();
+        TrainCar anchor = determineAnchor(other);
+        boolean thisIsAnchor = anchor == this;
+        TrainCar nonAnchor = (thisIsAnchor) ? other : this;
 
         double distance = this.position().distanceTo(other.position());
         double targetCenterDistance = (this.getCarLength() / 2.0d) + (other.getCarLength() / 2.0d) + COUPLER_GAP;
 
-        // UP TO HERE MODIFIED
+        if (distance <= targetCenterDistance + 1.0d && thisIsAnchor) {
 
-        if (distance <= targetCenterDistance + 1.0d) {
-            double deltaPos = otherCenter - thisCenter;
-            float yawRad = (float) Math.toRadians(this.getYRot());
-            double forwardDir = isZ ? Math.cos(yawRad) : -Math.sin(yawRad);
-            boolean thisTouchesFront = (deltaPos * forwardDir) > 0;
+            boolean nonAnchorFurther = nonAnchor.getDistanceAlongEdge() >= anchor.getDistanceAlongEdge();
 
-            double otherDeltaPos = thisCenter - otherCenter;
-            float otherYawRad = (float) Math.toRadians(other.getYRot());
-            double otherForwardDir = isZ ? Math.cos(otherYawRad) : -Math.sin(otherYawRad);
-            boolean otherTouchesFront = (otherDeltaPos * otherForwardDir) > 0;
+            double offset = nonAnchorFurther ? targetCenterDistance : -targetCenterDistance;
 
-            TrainCar thisTargetSlot = thisTouchesFront ? this.frontCoupledCar : this.rearCoupledCar;
-            TrainCar otherTargetSlot = otherTouchesFront ? other.frontCoupledCar : other.rearCoupledCar;
-
-            if (thisTargetSlot != null || otherTargetSlot != null) {
-                return;
+            // determining if coupled to front or back for both cars
+            if (!canCouple(nonAnchorFurther, anchor, nonAnchor)) {
+                return; // abort because slots are occupied.
             }
 
-            // determining lead car
-            double thisSpeed = this.getDeltaMovement().lengthSqr();
-            double otherSpeed = other.getDeltaMovement().lengthSqr();
+            connectCouplers(nonAnchorFurther, anchor, nonAnchor);
 
-            boolean thisHasAssembly = (this.getAssembly() != null);
-            boolean otherHasAssembly = (other.getAssembly() != null);
+            // setting the position of nonAnchor and matching its speed too
+            double newDistance = anchor.getDistanceAlongEdge() + offset;
 
-            boolean thisIsAnchor = (thisHasAssembly != otherHasAssembly)
-                    ? thisHasAssembly
-                    : (thisSpeed != otherSpeed ? thisSpeed > otherSpeed : this.getId() < other.getId());
+            nonAnchor.setDistanceAlongEdge(newDistance);
+            nonAnchor.speed = anchor.speed;
 
-            if (thisIsAnchor) {
-
-                double sign = (deltaPos >= 0) ? 1.0 : -1.0;
-
-                double newOtherPos = thisCenter + (sign * targetCenterDistance);
-
-                if (isZ) {
-                    other.moveTo(this.getX(), other.getY(), newOtherPos, other.getYRot(), other.getXRot());
-                } else {
-                    other.moveTo(newOtherPos, other.getY(), this.getZ(), other.getYRot(), other.getXRot());
-                }
-            } else {
-                return;
-            }
-
-            if (thisTouchesFront) {
-                this.setFrontCoupledCar(other);
-            } else {
-                this.setRearCoupledCar(other);
-            }
-
-            if (otherTouchesFront) {
-                other.setFrontCoupledCar(this);
-            } else {
-                other.setRearCoupledCar(this);
-            }
-
-            TrainAssembly thisAssembly = this.getAssembly();
-            TrainAssembly otherAssembly = other.getAssembly();
-
-            if (thisAssembly == null && otherAssembly == null) { // both this and other are NOT part of a train
-                new TrainAssembly(this, other);
-                logInGame(this.level(), this.getAssembly().toString());
-            } else if (thisAssembly != null && otherAssembly == null) { // only this IS part of a train
-                if (thisAssembly.getCars().get(0) == this) {
-                    thisAssembly.addFront(other);
-                } else {
-                    thisAssembly.addRear(other);
-                }
-                logInGame(this.level(), this.getAssembly().toString());
-            } else if (thisAssembly == null) { // only other IS part of a train
-                if (otherAssembly.getCars().get(0) == other) {
-                    otherAssembly.addFront(this);
-                } else {
-                    otherAssembly.addRear(this);
-                }
-                logInGame(this.level(), this.getAssembly().toString());
-            } else { // both this and other ARE part of a train
-                logInGame(this.level(), this.getAssembly().toString());
-                return;
-            }
+            // integrating Train Assembly
+            reconcileAssembly(anchor, nonAnchor);
         }
+    }
+
+    public static void reconcileAssembly(TrainCar anchor, TrainCar nonAnchor) {
+        // 3 cases
+        if (anchor.isAlone() && nonAnchor.isAlone()) { // both anchor and nonanchor are NOT part of a train
+            new TrainAssembly(anchor, nonAnchor);
+            logInGame(anchor.level(), anchor.getAssembly().toString());
+        } else if (!anchor.isAlone() && nonAnchor.isAlone()) { // only anchor IS part of a train
+            if (anchor.getAssembly().getCars().get(0) == anchor) {
+                anchor.getAssembly().prepend(nonAnchor);
+            } else {
+                anchor.getAssembly().append(nonAnchor);
+            }
+            logInGame(anchor.level(), anchor.getAssembly().toString());
+        } else if (!anchor.isAlone() && !nonAnchor.isAlone()) { // both anchor and nonanchor ARE part of a train
+
+        }
+    }
+
+    public static boolean canCouple(boolean nonAnchorFurther, TrainCar anchor, TrainCar nonAnchor) {
+        boolean anchorTouchesFront = (nonAnchorFurther == anchor.isFacingNodeB());
+        boolean nonAnchorTouchesFront = (!nonAnchorFurther == nonAnchor.isFacingNodeB());
+
+        TrainCar anchorTargetSlot = anchorTouchesFront ? anchor.getFrontCoupledCar() : anchor.getRearCoupledCar();
+        TrainCar nonAnchorTargetSlot = nonAnchorTouchesFront ? nonAnchor.getFrontCoupledCar() : nonAnchor.getRearCoupledCar();
+
+        return anchorTargetSlot == null && nonAnchorTargetSlot == null;
+    }
+
+    public static void connectCouplers(boolean nonAnchorFurther, TrainCar anchor, TrainCar nonAnchor) {
+        boolean anchorTouchesFront = (nonAnchorFurther == anchor.isFacingNodeB());
+        boolean nonAnchorTouchesFront = (!nonAnchorFurther == nonAnchor.isFacingNodeB());
+
+        updateFrontRearCoupling(anchorTouchesFront, anchor, nonAnchor);
+        updateFrontRearCoupling(nonAnchorTouchesFront, nonAnchor, anchor);
+    }
+
+    public static void updateFrontRearCoupling(boolean carTouchesFront, TrainCar car, TrainCar otherCar) {
+        if (carTouchesFront) {
+            car.setFrontCoupledCar(otherCar);
+        } else {
+            car.setRearCoupledCar(otherCar);
+        }
+    }
+
+    public TrainCar determineAnchor(TrainCar other) {
+        double thisAbsSpeed = this.getAbsSpeed();
+        double otherAbsSpeed = other.getAbsSpeed();
+
+        boolean thisIsAnchor = (this.isAlone() != other.isAlone())
+                ? !this.isAlone()
+                : (thisAbsSpeed != otherAbsSpeed) ? thisAbsSpeed > otherAbsSpeed : this.getId() < other.getId();
+
+        return thisIsAnchor ? this : other;
     }
 
     public void uncoupleAll() {
@@ -428,7 +422,22 @@ public class TrainCar extends Entity {
 
     public boolean isLeadCar() {
         if (this.isAlone()) return false;
-        return this.assembly.getCars().get(0) == this;
+        return this.assembly.getLead() == this;
+    }
+
+    public boolean isRearCar() {
+        if (this.isAlone()) return false;
+        return this.assembly.getRear() == this;
+    }
+
+    public TrainCar getNext() {
+        if (this.isAlone() || this.isRearCar()) return null;
+        return this.assembly.getCars().get(this.assembly.getIndex(this) + 1);
+    }
+
+    public TrainCar getPrev() {
+        if (this.isAlone() || this.isLeadCar()) return null;
+        return this.assembly.getCars().get(this.assembly.getIndex(this) - 1);
     }
 
     // node system integration
@@ -462,6 +471,21 @@ public class TrainCar extends Entity {
         setPositionFromEdge();
 
         publishEdgeToClients();
+    }
+
+    public boolean isFacingNodeB() {
+        if (this.currentEdge == null) {
+            return false;
+        }
+
+        Vec3 nodeAPos = this.currentEdge.nodeA.position;
+        Vec3 nodeBPos = this.currentEdge.nodeB.position;
+        Vec3 edgeDir = nodeBPos.subtract(nodeAPos).normalize();
+
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        Vec3 carForwardDir = new Vec3(-Math.sin(yawRad), 0.0d, Math.cos(yawRad));
+
+        return carForwardDir.dot(edgeDir) > 0.0d;
     }
 
     // ---- client-side edge resolution ---------------------------------------------------
@@ -560,6 +584,10 @@ public class TrainCar extends Entity {
         return this.distanceAlongEdge;
     }
 
+    public void setDistanceAlongEdge(double newDistance) {
+        this.distanceAlongEdge = newDistance;
+    }
+
     // ensuring the train car travels in the right direction
     public double getEdgeAlignment() {
         if (this.currentEdge == null) return 1.0;
@@ -577,9 +605,9 @@ public class TrainCar extends Entity {
 
     // movement
 
-    private static final double MAX_SPEED = 0.4f;
-    private static final double ACCELERATION = 0.01d;
-    private double speed = 0.0d;
+    public static final double MAX_SPEED = 0.4f;
+    public static final double ACCELERATION = 0.01d;
+    public double speed = 0.0d;
 
     public void accelerate(double throttle) {
         double alignment = getEdgeAlignment();
@@ -587,9 +615,9 @@ public class TrainCar extends Entity {
         this.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, this.speed));
     }
 
-    public void applyCoastingFriction() {
-        final double FRICTION = 0.98d;
+    public static final double FRICTION = 0.98d;
 
+    public void applyCoastingFriction() {
         if (this.speed != 0) {
             this.speed *= FRICTION;
             if (Math.abs(this.speed) < 0.01d) {
@@ -598,15 +626,21 @@ public class TrainCar extends Entity {
         }
     }
 
+    public double getAbsSpeed() {
+        return Math.abs(this.speed);
+    }
+
     public void processInput(Player player) {
         float forwardInput = player.zza;
 
-        if (forwardInput > 0) {
-            accelerate(1);
-        } else if (forwardInput < 0) {
-            accelerate(-1);
+        if (!this.isAlone()) {
+            if (forwardInput > 0) this.assembly.accelerate(1);
+            else if (forwardInput < 0) this.assembly.accelerate(-1);
+            else this.assembly.applyCoastingFriction();
         } else {
-            applyCoastingFriction();
+            if (forwardInput > 0) accelerate(1);
+            else if (forwardInput < 0) accelerate(-1);
+            else applyCoastingFriction();
         }
     }
 
@@ -635,12 +669,17 @@ public class TrainCar extends Entity {
             // SERVER SIDE
             if (this.onEdge()) {
                 // movement
-                if (this.isLocomotive() && this.getFirstPassenger() instanceof Player player) {
-                    processInput(player);
-                } else {
-                    applyCoastingFriction();
+                if (this.isAlone()) {
+                    if (this.isLocomotive() && this.getFirstPassenger() instanceof Player player) {
+                        processInput(player);
+                    } else {
+                        applyCoastingFriction();
+                    }
+                } else if (this.isLeadCar()) {
+                    this.assembly.tickAssembly();
                 }
 
+                // updating position to the server
                 updatePosition();
 
                 // coupling listener
