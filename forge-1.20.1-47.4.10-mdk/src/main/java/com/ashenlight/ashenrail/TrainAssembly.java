@@ -50,6 +50,20 @@ public class TrainAssembly {
         return cars.get(cars.size()-1);
     }
 
+    // minecraft's tick order appears to be from lower entity id's to higher ones, so we need to get the
+    // lowest id car in the assembly in order to determine the coordinator.
+    public TrainCar getTickCoordinator() {
+        TrainCar coordinator = this.cars.get(0);
+
+        for (TrainCar car : this.cars) {
+            if (car.getId() < coordinator.getId()) {
+                coordinator = car;
+            }
+        }
+
+        return coordinator;
+    }
+
     public int getIndex(TrainCar car) {
         return cars.indexOf(car);
     }
@@ -87,7 +101,6 @@ public class TrainAssembly {
     }
 
     public void accelerate(double throttle) {
-        this.receivedInputThisTick = true;
         double alignment = this.getLead().getEdgeAlignment();
         this.assemblySpeed += (throttle * alignment) * TrainCar.ACCELERATION;
         this.assemblySpeed = Math.max(-TrainCar.MAX_SPEED, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed));
@@ -102,25 +115,32 @@ public class TrainAssembly {
         }
     }
 
+    public void stopAssembly() {
+        this.assemblySpeed = 0.0d;
+    }
+
     public void syncAssemblyMovement(TrainCar car) {
         car.speed = this.assemblySpeed;
     }
 
-    private boolean receivedInputThisTick = false;
-
     public void tickAssembly() {
+        boolean isDriven = false; // assume no player driven locomotive
         for (TrainCar car : this.cars) {
-            if (car.isLocomotive() && car.getFirstPassenger() instanceof Player player) {
+            if (car.isLocomotive() && car.getFirstPassenger() instanceof  Player player) {
                 car.processInput(player);
+                isDriven = true;
             }
-            syncAssemblyMovement(car);
         }
 
-        if (!this.receivedInputThisTick) {
+        // if there is no player driven locomotive
+        if (!isDriven) {
             applyCoastingFriction();
         }
 
-        this.receivedInputThisTick = false;
+        // synchronizing the assemblySpeed to all cars.
+        for (TrainCar car : this.cars) {
+            syncAssemblyMovement(car);
+        }
     }
 }
 

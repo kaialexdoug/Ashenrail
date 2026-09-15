@@ -440,6 +440,11 @@ public class TrainCar extends Entity {
         return this.assembly.getCars().get(this.assembly.getIndex(this) - 1);
     }
 
+    public boolean isTickCoordinator() {
+        if (this.isAlone()) return false;
+        return this == this.assembly.getTickCoordinator();
+    }
+
     // node system integration
 
     private TrackEdge currentEdge;
@@ -644,16 +649,22 @@ public class TrainCar extends Entity {
         }
     }
 
-    public void updatePosition() {
-        this.prevDistanceAlongEdge = this.distanceAlongEdge;
-
+    public void clampDistAlongEdge() {
         // clamp the distance itself, not just the rendered position. Letting it run past the
         // end of the edge leaves the car pinned at the node while the counter keeps climbing,
         // so reversing does nothing until it has wound all the way back down.
         this.distanceAlongEdge = Mth.clamp(this.distanceAlongEdge + this.speed, 0.0d, this.currentEdge.length);
-        if (this.distanceAlongEdge <= 0.0d || this.distanceAlongEdge >= this.currentEdge.length) {
-            this.speed = 0.0d;
-        }
+    }
+
+    public boolean atTrackEnd() {
+        return (this.distanceAlongEdge <= 0.0d || this.distanceAlongEdge >= this.currentEdge.length);
+    }
+
+    public void updatePosition() {
+        this.prevDistanceAlongEdge = this.distanceAlongEdge;
+
+        clampDistAlongEdge();
+        if (atTrackEnd()) this.speed = 0.0d;
 
         this.entityData.set(DISTANCE_ALONG_EDGE, (float) this.distanceAlongEdge);
 
@@ -675,7 +686,7 @@ public class TrainCar extends Entity {
                     } else {
                         applyCoastingFriction();
                     }
-                } else if (this.isLeadCar()) {
+                } else if (this.isTickCoordinator()) {
                     this.assembly.tickAssembly();
                 }
 
