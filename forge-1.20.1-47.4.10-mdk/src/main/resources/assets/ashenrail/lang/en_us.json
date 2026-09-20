@@ -1,6 +1,9 @@
 {
   "creativetab.ashenrail.ashen_rail": "Ashenrail",
   "item.ashenrail.small_steam_locomotive": "Small Steam Locomotive",
+  "item.ashenrail.small_steam_locomotive_no_roof": "Small Steam Locomotive No Roof",
+  "item.ashenrail.small_steam_locomotive_no_window": "Small Steam Locomotive No Window",
   "item.ashenrail.small_oak_carriage": "Small Oak Carriage",
+  "item.ashenrail.small_oak_carriage_no_roof":"Small Oak Carriage No Roof",
   "block.ashenrail.narrow_track": "Narrow Track"
 }

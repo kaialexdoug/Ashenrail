@@ -15,12 +15,23 @@ public class TrainAssembly {
 
     public double assemblySpeed = 0d;
 
-    public TrainAssembly(TrainCar movingCar, TrainCar idleCar) {
-        cars.add(movingCar);
-        cars.add(idleCar);
+    // Ordered front to rear - index 0 is the lead car. Callers build that order; the assembly
+    // does not try to infer it, because "front" is about how the cars face, not where they sit
+    // on the edge.
+    public TrainAssembly(List<TrainCar> orderedCars) {
+        setCars(orderedCars);
+    }
 
-        movingCar.setAssembly(this);
-        idleCar.setAssembly(this);
+    public void setCars(List<TrainCar> orderedCars) {
+        // copy first: the caller's list may be built from this assembly's own car list
+        List<TrainCar> incoming = new ArrayList<>(orderedCars);
+
+        this.cars.clear();
+        this.cars.addAll(incoming);
+
+        for (TrainCar car : this.cars) {
+            car.setAssembly(this);
+        }
     }
 
     @Override
@@ -72,31 +83,46 @@ public class TrainAssembly {
         return cars.size();
     }
 
-    public void prepend(TrainCar car) {
-        if (!cars.contains(car)) {
-            cars.add(0, car);
-            car.setAssembly(this);
-        }
-    }
-
-    public void append(TrainCar car) {
-        if (!cars.contains(car)) {
-            cars.add(car);
-            car.setAssembly(this);
-        }
-    }
-
+    // Losing a car from the middle of a consist leaves two halves that are no longer connected
+    // to each other, so the assembly has to come apart with it - otherwise the rigid step would
+    // keep dragging the far half along through the gap where the car used to be.
+    //
+    // The half holding the original index 0 keeps this assembly; the other half becomes a new
+    // one. A half left with a single car is not an assembly at all, just a lone car again.
     public void removeCar(TrainCar car) {
-        if (!cars.contains(car)) return;
+        int index = cars.indexOf(car);
+        if (index < 0) return;
 
-        cars.remove(car);
+        // copy before clearing - subList is a view onto the list we are about to empty
+        List<TrainCar> front = new ArrayList<>(cars.subList(0, index));
+        List<TrainCar> back = new ArrayList<>(cars.subList(index + 1, cars.size()));
+
+        // both halves keep coasting at whatever the whole train was doing
+        double inheritedSpeed = this.assemblySpeed;
+
         car.setAssembly(null);
+        this.cars.clear();
 
-        if (cars.size() < 2) {
-            for (TrainCar remainingCar : cars) {
-                remainingCar.setAssembly(null);
-            }
-            cars.clear();
+        if (front.size() >= 2) {
+            setCars(front); // this assembly carries on as the front half
+        } else {
+            detach(front, inheritedSpeed);
+        }
+
+        if (back.size() >= 2) {
+            TrainAssembly split = new TrainAssembly(back);
+            split.assemblySpeed = inheritedSpeed;
+        } else {
+            detach(back, inheritedSpeed);
+        }
+    }
+
+    // fewer than two cars cannot be an assembly, so whatever is left goes back to being solo.
+    // it keeps the train's speed in its own field so it coasts away instead of stopping dead.
+    private static void detach(List<TrainCar> remnant, double inheritedSpeed) {
+        for (TrainCar car : remnant) {
+            car.setAssembly(null);
+            car.speed = inheritedSpeed;
         }
     }
 
@@ -119,8 +145,9 @@ public class TrainAssembly {
         this.assemblySpeed = 0.0d;
     }
 
-    public void syncAssemblyMovement(TrainCar car) {
-        car.speed = this.assemblySpeed;
+    public void syncAssemblyMovement(TrainCar car, double step) {
+        car.speed = step;
+        car.setDistanceAlongEdge(car.getDistanceAlongEdge() + step);
     }
 
     public void tickAssembly() {
@@ -137,9 +164,33 @@ public class TrainAssembly {
             applyCoastingFriction();
         }
 
-        // synchronizing the assemblySpeed to all cars.
+        moveAssembly();
+    }
+
+    // The assembly is rigid, so every car has to move by the EXACT same amount every tick -
+    // spacing is only preserved because the steps are identical, and any tick where they differ
+    // changes the coupling gap permanently. That means the step has to be agreed on BEFORE
+    // anything moves: work out what each car can manage, take the most restrictive answer, then
+    // apply that one step to the whole train. One blocked car stops the entire assembly.
+    public void moveAssembly() {
+        double step = this.assemblySpeed;
+
+        // pass 1 - decide. the most restricted car wins; nothing has moved yet.
         for (TrainCar car : this.cars) {
-            syncAssemblyMovement(car);
+            step = car.clampStepToEdge(step);
+        }
+
+        boolean blocked = (step != this.assemblySpeed);
+
+        // pass 2 - apply the agreed step, identically, to everyone.
+        for (TrainCar car : this.cars) {
+            syncAssemblyMovement(car, step);
+        }
+
+        // being cut short means we ran into a buffer, so drop the throttle rather than letting
+        // it re-accelerate into the same wall next tick and creep the train forward.
+        if (blocked) {
+            stopAssembly();
         }
     }
 }

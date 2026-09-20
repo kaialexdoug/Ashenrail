@@ -2,6 +2,7 @@ package com.ashenlight.ashenrail;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.Registry;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 
 
 import static com.ashenlight.ashenrail.ModEntities.ENTITIES;
+import static com.ashenlight.ashenrail.TrainCarRenderer.*;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(AshenRail.MODID)
@@ -65,8 +67,11 @@ public class AshenRail
     public static final RegistryObject<Block> NARROW_TRACK = BLOCKS.register("narrow_track", TrackBlock::new);
 
     // items (and block items)
-    public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE = ITEMS.register("small_steam_locomotive", () -> new TrainCarItem(0, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> SMALL_OAK_CARRIAGE = ITEMS.register("small_oak_carriage", () -> new TrainCarItem(1, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE = ITEMS.register("small_steam_locomotive", () -> new TrainCarItem(VARIANT_SMALL_STEAM_LOCOMOTIVE, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE_NO_ROOF = ITEMS.register("small_steam_locomotive_no_roof", () -> new TrainCarItem(VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE_NO_WINDOW = ITEMS.register("small_steam_locomotive_no_window", () -> new TrainCarItem(VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SMALL_OAK_CARRIAGE = ITEMS.register("small_oak_carriage", () -> new TrainCarItem(VARIANT_SMALL_OAK_CARRIAGE, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SMALL_OAK_CARRIAGE_NO_ROOF = ITEMS.register("small_oak_carriage_no_roof", () -> new TrainCarItem(VARIANT_SMALL_OAK_CARRIAGE_NO_ROOF, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> NARROW_TRACK_ITEM = ITEMS.register("narrow_track", () -> new BlockItem(NARROW_TRACK.get(), new Item.Properties()));
 
     // Creates a creative tab with the id "examplemod:example_tab" for the example item, that is placed after the combat tab
@@ -77,7 +82,10 @@ public class AshenRail
             .displayItems((parameters, output) -> {
                 output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
                 output.accept(SMALL_STEAM_LOCOMOTIVE.get());
+                output.accept(SMALL_STEAM_LOCOMOTIVE_NO_ROOF.get());
+                output.accept(SMALL_STEAM_LOCOMOTIVE_NO_WINDOW.get());
                 output.accept(SMALL_OAK_CARRIAGE.get());
+                output.accept(SMALL_OAK_CARRIAGE_NO_ROOF.get());
                 output.accept(NARROW_TRACK_ITEM.get());
             }).build());
 

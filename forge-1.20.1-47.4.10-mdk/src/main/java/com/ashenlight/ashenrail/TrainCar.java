@@ -29,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -37,6 +39,7 @@ import java.util.Optional;
 import static com.ashenlight.ashenrail.AshenRail.*;
 import static com.ashenlight.ashenrail.Debug.logInGame;
 import static com.ashenlight.ashenrail.Debug.renderParticle;
+import static com.ashenlight.ashenrail.TrainCarRenderer.*;
 
 public class TrainCar extends Entity {
 
@@ -160,8 +163,12 @@ public class TrainCar extends Entity {
 
     private Vec3 getSeatOffsetForVariant(int variant) {
         return switch(variant) {
-            case 0 -> new Vec3(0.0d, 0.5d, -1.0d);
-            default -> new Vec3(0.0d, 0.5d, 0.0d);
+            case VARIANT_SMALL_STEAM_LOCOMOTIVE -> new Vec3(0.0d, 0.6d, -1.0d);
+            case VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF ->  new Vec3(0.0d, 0.6d, -1.0d);
+            case VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW -> new Vec3(0.0d, 0.6d, -1.0d);
+            case VARIANT_SMALL_OAK_CARRIAGE -> new Vec3(0.0d, 0.6d, 0.0d);
+            case VARIANT_SMALL_OAK_CARRIAGE_NO_ROOF -> new Vec3(0.0d, 0.6d, 0.0d);
+            default -> new Vec3(0.0d, 0.6d, 0.0d);
         };
     }
 
@@ -193,7 +200,9 @@ public class TrainCar extends Entity {
     }
 
     public boolean isLocomotive() {
-        return this.getVariant() == 0;
+        return this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE
+                || this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF
+                || this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW;
     }
 
     @Override
@@ -232,7 +241,7 @@ public class TrainCar extends Entity {
         double halfZ = facingEastWest ? this.getCarWidth() / 2.0d : this.getCarLength() / 2.0d;
         double height = 2.0d;
 
-        double yOffset = 0.625d;
+        double yOffset = 0.7d;
 
         return new AABB(
                 x - halfX, y + yOffset, z - halfZ,
@@ -281,55 +290,119 @@ public class TrainCar extends Entity {
         if (other == this || !this.isAlignedWith(other)) return;
         if (!this.hasOpenCoupler() || !other.hasOpenCoupler()) return;
 
-        Direction.Axis axis = this.getTrackAxis();
-        boolean isZ = (axis == Direction.Axis.Z);
-
         TrainCar anchor = determineAnchor(other);
-        boolean thisIsAnchor = anchor == this;
-        TrainCar nonAnchor = (thisIsAnchor) ? other : this;
+        if (anchor != this) return; // the anchor's own tick drives the coupling, not ours
+
+        TrainCar nonAnchor = other;
 
         double distance = this.position().distanceTo(other.position());
-        double targetCenterDistance = (this.getCarLength() / 2.0d) + (other.getCarLength() / 2.0d) + COUPLER_GAP;
+        double targetCenterDistance = getSpacingBetweenCars(anchor, nonAnchor);
+        if (distance > targetCenterDistance + 1.0d) return;
 
-        if (distance <= targetCenterDistance + 1.0d && thisIsAnchor) {
+        boolean nonAnchorFurther = nonAnchor.getDistanceAlongEdge() >= anchor.getDistanceAlongEdge();
+        double offset = nonAnchorFurther ? targetCenterDistance : -targetCenterDistance;
 
-            boolean nonAnchorFurther = nonAnchor.getDistanceAlongEdge() >= anchor.getDistanceAlongEdge();
+        // determining if coupled to front or back for both cars
+        if (!canCouple(nonAnchorFurther, anchor, nonAnchor)) {
+            return; // abort because slots are occupied.
+        }
 
-            double offset = nonAnchorFurther ? targetCenterDistance : -targetCenterDistance;
+        // The anchor's train is the reference frame and does not move. The non-anchor's ENTIRE
+        // train slides in to meet it as one rigid unit - shifting only the contacting car would
+        // close its gap to the anchor while tearing it away from its own train-mates behind it.
+        // A lone car is just a group of one, so both cases run through the same path.
+        double shift = (anchor.getDistanceAlongEdge() + offset) - nonAnchor.getDistanceAlongEdge();
+        List<TrainCar> incoming = new ArrayList<>(nonAnchor.getGroupCars());
 
-            // determining if coupled to front or back for both cars
-            if (!canCouple(nonAnchorFurther, anchor, nonAnchor)) {
-                return; // abort because slots are occupied.
-            }
+        // Refuse rather than trim: clamping a car back onto the edge would silently change the
+        // spacing inside the incoming train, which rigid coupling must never allow.
+        if (!canShiftGroup(incoming, shift)) return;
 
-            connectCouplers(nonAnchorFurther, anchor, nonAnchor);
+        connectCouplers(nonAnchorFurther, anchor, nonAnchor);
+        shiftGroup(incoming, shift);
 
-            // setting the position of nonAnchor and matching its speed too
-            double newDistance = anchor.getDistanceAlongEdge() + offset;
+        // integrating Train Assembly
+        reconcileAssembly(nonAnchorFurther, anchor, nonAnchor);
+    }
 
-            nonAnchor.setDistanceAlongEdge(newDistance);
-            nonAnchor.speed = anchor.speed;
+    // ---- group helpers: a lone car is an assembly of one ----------------------------------
 
-            // integrating Train Assembly
-            reconcileAssembly(anchor, nonAnchor);
+    public int getGroupSize() {
+        return this.isAlone() ? 1 : this.assembly.size();
+    }
+
+    public TrainCar getGroupLead() {
+        return this.isAlone() ? this : this.assembly.getLead();
+    }
+
+    public List<TrainCar> getGroupCars() {
+        return this.isAlone() ? List.of(this) : this.assembly.getCars();
+    }
+
+    public boolean fitsOnEdgeAt(double distance) {
+        return this.currentEdge != null && distance >= 0.0d && distance <= this.currentEdge.length;
+    }
+
+    public static boolean canShiftGroup(List<TrainCar> cars, double shift) {
+        for (TrainCar car : cars) {
+            if (!car.fitsOnEdgeAt(car.getDistanceAlongEdge() + shift)) return false;
+        }
+        return true;
+    }
+
+    public static void shiftGroup(List<TrainCar> cars, double shift) {
+        for (TrainCar car : cars) {
+            car.setDistanceAlongEdge(car.getDistanceAlongEdge() + shift);
+            car.setPositionFromEdge();
         }
     }
 
-    public static void reconcileAssembly(TrainCar anchor, TrainCar nonAnchor) {
-        // 3 cases
-        if (anchor.isAlone() && nonAnchor.isAlone()) { // both anchor and nonanchor are NOT part of a train
-            new TrainAssembly(anchor, nonAnchor);
-            logInGame(anchor.level(), anchor.getAssembly().toString());
-        } else if (!anchor.isAlone() && nonAnchor.isAlone()) { // only anchor IS part of a train
-            if (anchor.getAssembly().getCars().get(0) == anchor) {
-                anchor.getAssembly().prepend(nonAnchor);
-            } else {
-                anchor.getAssembly().append(nonAnchor);
-            }
-            logInGame(anchor.level(), anchor.getAssembly().toString());
-        } else if (!anchor.isAlone() && !nonAnchor.isAlone()) { // both anchor and nonanchor ARE part of a train
+    // Builds the merged consist. Index 0 is the FRONT of the train, so the incoming cars are
+    // spliced onto whichever end of the anchor's list they actually touched. The incoming list
+    // is reversed when the trains met nose-to-nose (or tail-to-tail), because in that case its
+    // own front-to-rear order runs backwards relative to the combined train.
+    //
+    // Indexes come from the anchor: its list keeps its order and direction, and the incoming
+    // cars are renumbered around it. Coupling [0 1 2 3] onto the front of [0..7] gives [0..11]
+    // as (0 1 2 3 | 0 1 2 3 4 5 6 7); if that first train met nose-to-nose it becomes
+    // (3 2 1 0 | 0 1 2 3 4 5 6 7) - still [0..11], just walked the other way.
+    public static void reconcileAssembly(boolean nonAnchorFurther, TrainCar anchor, TrainCar nonAnchor) {
+        boolean anchorTouchesFront = (nonAnchorFurther == anchor.isFacingNodeB());
+        boolean nonAnchorTouchesFront = (!nonAnchorFurther == nonAnchor.isFacingNodeB());
 
+        // read the anchor's speed before anything is rewired - the merged train inherits it
+        double mergedSpeed = anchor.isAlone() ? anchor.speed : anchor.getAssembly().assemblySpeed;
+
+        List<TrainCar> anchorCars = new ArrayList<>(anchor.getGroupCars());
+        List<TrainCar> incoming = new ArrayList<>(nonAnchor.getGroupCars());
+
+        List<TrainCar> merged = new ArrayList<>();
+
+        if (anchorTouchesFront) {
+            // incoming train sits ahead, so nonAnchor has to end up adjacent to the anchor
+            if (nonAnchorTouchesFront) Collections.reverse(incoming);
+            merged.addAll(incoming);
+            merged.addAll(anchorCars);
+        } else {
+            // incoming train sits behind, so nonAnchor has to lead the spliced-on section
+            if (!nonAnchorTouchesFront) Collections.reverse(incoming);
+            merged.addAll(anchorCars);
+            merged.addAll(incoming);
         }
+
+        // reuse the anchor's assembly where there is one so its state survives the merge; the
+        // non-anchor's assembly is left unreferenced once its cars are re-pointed.
+        TrainAssembly target = anchor.getAssembly() != null ? anchor.getAssembly() : nonAnchor.getAssembly();
+
+        if (target == null) {
+            target = new TrainAssembly(merged);
+        } else {
+            target.setCars(merged);
+        }
+
+        target.assemblySpeed = mergedSpeed;
+
+        logInGame(anchor.level(), target.toString());
     }
 
     public static boolean canCouple(boolean nonAnchorFurther, TrainCar anchor, TrainCar nonAnchor) {
@@ -358,15 +431,27 @@ public class TrainCar extends Entity {
         }
     }
 
+    // The anchor is the train that stays put and supplies the merged indexing, so the shorter
+    // train should always be the one that does the moving: longer group first, then faster, then
+    // lowest lead-car entity id as a stable tiebreak.
     public TrainCar determineAnchor(TrainCar other) {
+        int thisSize = this.getGroupSize();
+        int otherSize = other.getGroupSize();
+        if (thisSize != otherSize) {
+            return (thisSize > otherSize) ? this : other;
+        }
+
         double thisAbsSpeed = this.getAbsSpeed();
         double otherAbsSpeed = other.getAbsSpeed();
+        if (thisAbsSpeed != otherAbsSpeed) {
+            return (thisAbsSpeed > otherAbsSpeed) ? this : other;
+        }
 
-        boolean thisIsAnchor = (this.isAlone() != other.isAlone())
-                ? !this.isAlone()
-                : (thisAbsSpeed != otherAbsSpeed) ? thisAbsSpeed > otherAbsSpeed : this.getId() < other.getId();
+        return (this.getGroupLead().getId() <= other.getGroupLead().getId()) ? this : other;
+    }
 
-        return thisIsAnchor ? this : other;
+    public static double getSpacingBetweenCars(TrainCar carA, TrainCar carB) {
+        return (carA.getCarLength() / 2.0d + carB.getCarLength() / 2.0d) + COUPLER_GAP;
     }
 
     public void uncoupleAll() {
@@ -649,22 +734,24 @@ public class TrainCar extends Entity {
         }
     }
 
-    public void clampDistAlongEdge() {
-        // clamp the distance itself, not just the rendered position. Letting it run past the
-        // end of the edge leaves the car pinned at the node while the counter keeps climbing,
-        // so reversing does nothing until it has wound all the way back down.
-        this.distanceAlongEdge = Mth.clamp(this.distanceAlongEdge + this.speed, 0.0d, this.currentEdge.length);
-    }
+    // How much of `step` this car can actually travel before it runs into one end of its edge.
+    // Returns a value with the same sign as `step` and never larger in magnitude, so callers can
+    // ask "what is the most everyone can move?" WITHOUT moving anything yet. Direction aware on
+    // purpose: a car parked against node B is not blocked when it is asked to move toward node A.
+    public double clampStepToEdge(double step) {
+        if (this.currentEdge == null) return 0.0d;
 
-    public boolean atTrackEnd() {
-        return (this.distanceAlongEdge <= 0.0d || this.distanceAlongEdge >= this.currentEdge.length);
+        if (step > 0.0d) {
+            return Math.min(step, Math.max(0.0d, this.currentEdge.length - this.distanceAlongEdge));
+        }
+        if (step < 0.0d) {
+            return Math.max(step, Math.min(0.0d, -this.distanceAlongEdge));
+        }
+        return 0.0d;
     }
 
     public void updatePosition() {
         this.prevDistanceAlongEdge = this.distanceAlongEdge;
-
-        clampDistAlongEdge();
-        if (atTrackEnd()) this.speed = 0.0d;
 
         this.entityData.set(DISTANCE_ALONG_EDGE, (float) this.distanceAlongEdge);
 
@@ -686,6 +773,11 @@ public class TrainCar extends Entity {
                     } else {
                         applyCoastingFriction();
                     }
+
+                    // move only as far as the edge allows, and stop dead if that cut us short
+                    double step = clampStepToEdge(this.speed);
+                    if (step != this.speed) this.speed = 0.0d;
+                    this.distanceAlongEdge += step;
                 } else if (this.isTickCoordinator()) {
                     this.assembly.tickAssembly();
                 }
