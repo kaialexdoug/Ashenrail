@@ -9,11 +9,15 @@ import net.minecraftforge.fml.common.Mod;
 public class ClientModEvents {
     @SubscribeEvent
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        // experimental models
         event.registerLayerDefinition(SmallSteamLocomotiveModel.LAYER_LOCATION, SmallSteamLocomotiveModel::createBodyLayer);
         event.registerLayerDefinition(SmallSteamLocomotiveNoRoofModel.LAYER_LOCATION, SmallSteamLocomotiveNoRoofModel::createBodyLayer);
         event.registerLayerDefinition(SmallSteamLocomotiveNoWindowModel.LAYER_LOCATION, SmallSteamLocomotiveNoWindowModel::createBodyLayer);
         event.registerLayerDefinition(SmallOakCarriageModel.LAYER_LOCATION, SmallOakCarriageModel::createBodyLayer);
         event.registerLayerDefinition(SmallOakCarriageNoRoofModel.LAYER_LOCATION, SmallOakCarriageNoRoofModel::createBodyLayer);
+
+        // official models
+        event.registerLayerDefinition(SteamLocomotive.LAYER_LOCATION, SteamLocomotive::createBodyLayer);
     }
 
     @SubscribeEvent

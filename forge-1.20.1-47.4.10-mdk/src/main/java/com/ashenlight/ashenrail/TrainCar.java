@@ -163,12 +163,24 @@ public class TrainCar extends Entity {
 
     private Vec3 getSeatOffsetForVariant(int variant) {
         return switch(variant) {
+            // experimental train car variants
             case VARIANT_SMALL_STEAM_LOCOMOTIVE -> new Vec3(0.0d, 0.6d, -1.0d);
             case VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF ->  new Vec3(0.0d, 0.6d, -1.0d);
             case VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW -> new Vec3(0.0d, 0.6d, -1.0d);
             case VARIANT_SMALL_OAK_CARRIAGE -> new Vec3(0.0d, 0.6d, 0.0d);
             case VARIANT_SMALL_OAK_CARRIAGE_NO_ROOF -> new Vec3(0.0d, 0.6d, 0.0d);
+
+            // official train car variants
+            case VARIANT_STEAM_LOCOMOTIVE -> new Vec3(0.0d, 1.0d, -1.1d);
             default -> new Vec3(0.0d, 0.6d, 0.0d);
+        };
+    }
+
+    private double getWheelRadiusForVariant() {
+        return switch(this.getVariant()) {
+            // official variants
+            case VARIANT_STEAM_LOCOMOTIVE -> SteamLocomotive.WHEEL_RADIUS;
+            default -> SteamLocomotive.WHEEL_RADIUS;
         };
     }
 
@@ -177,8 +189,12 @@ public class TrainCar extends Entity {
 
     public double getCarLength() {
         return switch (this.getVariant()) {
+            // experimental variants
             case 0 -> 4.0d;
             case 1 -> 4.0d;
+
+            // official variants
+            case VARIANT_STEAM_LOCOMOTIVE -> 4.0d;
             default -> DEFAULT_LENGTH;
         };
     }
@@ -202,7 +218,8 @@ public class TrainCar extends Entity {
     public boolean isLocomotive() {
         return this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE
                 || this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF
-                || this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW;
+                || this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW
+                || this.getVariant() == VARIANT_STEAM_LOCOMOTIVE;
     }
 
     @Override
@@ -241,7 +258,7 @@ public class TrainCar extends Entity {
         double halfZ = facingEastWest ? this.getCarWidth() / 2.0d : this.getCarLength() / 2.0d;
         double height = 2.0d;
 
-        double yOffset = 0.7d;
+        double yOffset = 0.5d;
 
         return new AABB(
                 x - halfX, y + yOffset, z - halfZ,
@@ -530,6 +547,18 @@ public class TrainCar extends Entity {
         return this == this.assembly.getTickCoordinator();
     }
 
+    // animation
+
+    private double wheelRotation = 0.0d;
+
+    private void rotateWheel(double step) {
+        this.wheelRotation += step / this.getWheelRadiusForVariant();
+    }
+
+    public double getWheelRotation() {
+        return this.wheelRotation;
+    }
+
     // node system integration
 
     private TrackEdge currentEdge;
@@ -670,6 +699,10 @@ public class TrainCar extends Entity {
         this.setBoundingBox(this.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
     }
 
+    public double getPrevDistanceAlongEdge() {
+        return this.prevDistanceAlongEdge;
+    }
+
     public double getDistanceAlongEdge() {
         return this.distanceAlongEdge;
     }
@@ -778,6 +811,7 @@ public class TrainCar extends Entity {
                     double step = clampStepToEdge(this.speed);
                     if (step != this.speed) this.speed = 0.0d;
                     this.distanceAlongEdge += step;
+                    this.rotateWheel(step);
                 } else if (this.isTickCoordinator()) {
                     this.assembly.tickAssembly();
                 }
