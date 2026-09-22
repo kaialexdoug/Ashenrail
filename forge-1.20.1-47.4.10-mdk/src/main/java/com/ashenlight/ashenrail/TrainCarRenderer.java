@@ -35,7 +35,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
     private static final ResourceLocation SMALL_OAK_CARRIAGE_NO_ROOF_TEXTURE = new ResourceLocation(AshenRail.MODID, "textures/entity/small_oak_carriage.png");
 
     //textures (official)
-    private static final ResourceLocation STEAM_LOCOMOTIVE_TEXTURE = new ResourceLocation(AshenRail.MODID, "textures/entity/small_steam_locomotive.png");
+    private static final ResourceLocation STEAM_LOCOMOTIVE_TEXTURE = new ResourceLocation(AshenRail.MODID, "");
 
     public TrainCarRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -101,7 +101,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
 
         EntityModel<TrainCar> model = getVariantData(trainCar).model();
 
-        model.setupAnim(trainCar, 0, 0, 0, 0, 0);
+        model.setupAnim(trainCar, 0, 0, partialTicks, 0, 0);
 
         VertexConsumer vertexConsumer = buffer.getBuffer(model.renderType(getTextureLocation(trainCar)));
 

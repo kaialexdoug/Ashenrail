@@ -10,6 +10,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
 public class SteamLocomotive<T extends Entity> extends EntityModel<T> {
@@ -348,17 +349,21 @@ public class SteamLocomotive<T extends Entity> extends EntityModel<T> {
 		return LayerDefinition.create(meshdefinition, 16, 16);
 	}
 
-	public static final double WHEEL_RADIUS = 0.4375d; // wheel radius in minecraft blocks. in blockbench it is 7.
+	public static final double WHEEL_RADIUS = 0.375d; // wheel radius in minecraft blocks. in blockbench it is 7.
 
 	@Override
 	public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-		double rotation = ((TrainCar) entity).getWheelRotation();
+		float partialTicks = ageInTicks;
+
+		double rotation = Mth.lerp(
+				partialTicks,
+				(float) ((TrainCar) entity).getPrevWheelRotation(),
+				(float) ((TrainCar) entity).getWheelRotation()
+		);
 
 		this.wheelsandaxle.xRot = (float) rotation;
 		this.wheelsandaxle2.xRot = (float) rotation;
 		this.wheelsandaxle3.xRot = (float) rotation;
-
-		System.out.println(rotation);
 	}
 
 	@Override

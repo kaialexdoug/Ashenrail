@@ -45,6 +45,7 @@ public class TrainCar extends Entity {
 
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DISTANCE_ALONG_EDGE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> WHEEL_ROTATION = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
 
     // TrackEdge itself is never networked. Instead we ship the block span the edge covers,
     // which is exact, tiny, and lets the client rebuild an identical edge with pure math.
@@ -71,6 +72,7 @@ public class TrainCar extends Entity {
         this.entityData.define(EDGE_AXIS, AXIS_X);
         this.entityData.define(EDGE_START, Optional.empty());
         this.entityData.define(EDGE_END, Optional.empty());
+        this.entityData.define(WHEEL_ROTATION, 0.0f);
     }
 
     @Override
@@ -549,14 +551,20 @@ public class TrainCar extends Entity {
 
     // animation
 
+    private double prevWheelRotation = 0.0d;
     private double wheelRotation = 0.0d;
 
     private void rotateWheel(double step) {
-        this.wheelRotation += step / this.getWheelRadiusForVariant();
+        double dirFactor = this.isFacingNodeB() ? -1 : 1;
+        this.wheelRotation += (step / this.getWheelRadiusForVariant()) * dirFactor;
     }
 
     public double getWheelRotation() {
         return this.wheelRotation;
+    }
+
+    public double getPrevWheelRotation() {
+        return this.prevWheelRotation;
     }
 
     // node system integration
@@ -785,8 +793,10 @@ public class TrainCar extends Entity {
 
     public void updatePosition() {
         this.prevDistanceAlongEdge = this.distanceAlongEdge;
+        this.prevWheelRotation = this.wheelRotation;
 
         this.entityData.set(DISTANCE_ALONG_EDGE, (float) this.distanceAlongEdge);
+        this.entityData.set(WHEEL_ROTATION, (float) this.wheelRotation);
 
         this.currentEdge.updateCarPosition(this);
         setPositionFromEdge();
@@ -811,10 +821,11 @@ public class TrainCar extends Entity {
                     double step = clampStepToEdge(this.speed);
                     if (step != this.speed) this.speed = 0.0d;
                     this.distanceAlongEdge += step;
-                    this.rotateWheel(step);
                 } else if (this.isTickCoordinator()) {
                     this.assembly.tickAssembly();
                 }
+
+                this.rotateWheel(this.distanceAlongEdge - this.prevDistanceAlongEdge);
 
                 // updating position to the server
                 updatePosition();
@@ -846,6 +857,8 @@ public class TrainCar extends Entity {
 
             this.prevDistanceAlongEdge = this.distanceAlongEdge;
             this.distanceAlongEdge = this.entityData.get(DISTANCE_ALONG_EDGE);
+            this.prevWheelRotation = this.wheelRotation;
+            this.wheelRotation = this.entityData.get(WHEEL_ROTATION);
 
             if (this.currentEdge != null) {
                 setPositionFromEdge();
