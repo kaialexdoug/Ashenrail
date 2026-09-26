@@ -63,13 +63,6 @@ public class AshenRail
     public static final RegistryObject<Item> EXAMPLE_ITEM = ITEMS.register("example_item", () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
             .alwaysEat().nutrition(1).saturationMod(2f).build())));
 
-    // experimental train car items
-    public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE = ITEMS.register("small_steam_locomotive", () -> new TrainCarItem(VARIANT_SMALL_STEAM_LOCOMOTIVE, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE_NO_ROOF = ITEMS.register("small_steam_locomotive_no_roof", () -> new TrainCarItem(VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> SMALL_STEAM_LOCOMOTIVE_NO_WINDOW = ITEMS.register("small_steam_locomotive_no_window", () -> new TrainCarItem(VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> SMALL_OAK_CARRIAGE = ITEMS.register("small_oak_carriage", () -> new TrainCarItem(VARIANT_SMALL_OAK_CARRIAGE, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> SMALL_OAK_CARRIAGE_NO_ROOF = ITEMS.register("small_oak_carriage_no_roof", () -> new TrainCarItem(VARIANT_SMALL_OAK_CARRIAGE_NO_ROOF, new Item.Properties().stacksTo(1)));
-
     // blocks
     public static final RegistryObject<Block> NARROW_TRACK = BLOCKS.register("narrow_track", TrackBlock::new);
 
@@ -81,17 +74,9 @@ public class AshenRail
     public static final RegistryObject<CreativeModeTab> ASHENRAIL_TAB = CREATIVE_MODE_TABS.register("ashenrail_tab", () -> CreativeModeTab.builder()
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .title(Component.translatable("creativetab.ashenrail.ashen_rail"))
-            .icon(() -> SMALL_STEAM_LOCOMOTIVE.get().getDefaultInstance())
+            .icon(() -> STEAM_LOCOMOTIVE_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
-
-                // experimental train cars
-                output.accept(SMALL_STEAM_LOCOMOTIVE.get());
-                output.accept(SMALL_STEAM_LOCOMOTIVE_NO_ROOF.get());
-                output.accept(SMALL_STEAM_LOCOMOTIVE_NO_WINDOW.get());
-                output.accept(SMALL_OAK_CARRIAGE.get());
-                output.accept(SMALL_OAK_CARRIAGE_NO_ROOF.get());
-
                 // official
                 output.accept(STEAM_LOCOMOTIVE_ITEM.get());
                 output.accept(NARROW_TRACK_ITEM.get());

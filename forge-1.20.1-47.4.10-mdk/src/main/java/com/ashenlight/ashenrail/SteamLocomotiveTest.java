@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
-public class SteamLocomotive<T extends Entity> extends EntityModel<T> {
+public class SteamLocomotiveTest<T extends Entity> extends EntityModel<T> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
 	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation("modid", "steamlocomotive"), "main");
 	private final ModelPart steamlocomotive;
@@ -34,7 +34,7 @@ public class SteamLocomotive<T extends Entity> extends EntityModel<T> {
 	private final ModelPart wheel5;
 	private final ModelPart wheel6;
 
-	public SteamLocomotive(ModelPart root) {
+	public SteamLocomotiveTest(ModelPart root) {
 		this.steamlocomotive = root.getChild("steamlocomotive");
 		this.boiler = this.steamlocomotive.getChild("boiler");
 		this.cab = this.steamlocomotive.getChild("cab");

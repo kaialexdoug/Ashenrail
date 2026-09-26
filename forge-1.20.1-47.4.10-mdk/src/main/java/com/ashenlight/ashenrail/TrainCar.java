@@ -4,15 +4,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
-import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -20,25 +17,19 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
 import static com.ashenlight.ashenrail.AshenRail.*;
 import static com.ashenlight.ashenrail.Debug.logInGame;
-import static com.ashenlight.ashenrail.Debug.renderParticle;
 import static com.ashenlight.ashenrail.TrainCarRenderer.*;
 
 public class TrainCar extends Entity {
@@ -165,15 +156,8 @@ public class TrainCar extends Entity {
 
     private Vec3 getSeatOffsetForVariant(int variant) {
         return switch(variant) {
-            // experimental train car variants
-            case VARIANT_SMALL_STEAM_LOCOMOTIVE -> new Vec3(0.0d, 0.6d, -1.0d);
-            case VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF ->  new Vec3(0.0d, 0.6d, -1.0d);
-            case VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW -> new Vec3(0.0d, 0.6d, -1.0d);
-            case VARIANT_SMALL_OAK_CARRIAGE -> new Vec3(0.0d, 0.6d, 0.0d);
-            case VARIANT_SMALL_OAK_CARRIAGE_NO_ROOF -> new Vec3(0.0d, 0.6d, 0.0d);
-
             // official train car variants
-            case VARIANT_STEAM_LOCOMOTIVE -> new Vec3(0.0d, 1.0d, -1.1d);
+            case VARIANT_STEAM_LOCOMOTIVE -> new Vec3(0.0d, 0.4d, -1.1d);
             default -> new Vec3(0.0d, 0.6d, 0.0d);
         };
     }
@@ -181,8 +165,8 @@ public class TrainCar extends Entity {
     private double getWheelRadiusForVariant() {
         return switch(this.getVariant()) {
             // official variants
-            case VARIANT_STEAM_LOCOMOTIVE -> SteamLocomotive.WHEEL_RADIUS;
-            default -> SteamLocomotive.WHEEL_RADIUS;
+            case VARIANT_STEAM_LOCOMOTIVE -> SteamLocomotiveModel.WHEEL_RADIUS;
+            default -> SteamLocomotiveModel.WHEEL_RADIUS;
         };
     }
 
@@ -191,10 +175,6 @@ public class TrainCar extends Entity {
 
     public double getCarLength() {
         return switch (this.getVariant()) {
-            // experimental variants
-            case 0 -> 4.0d;
-            case 1 -> 4.0d;
-
             // official variants
             case VARIANT_STEAM_LOCOMOTIVE -> 4.0d;
             default -> DEFAULT_LENGTH;
@@ -203,8 +183,7 @@ public class TrainCar extends Entity {
 
     public double getCarWidth() {
         return switch (this.getVariant()) {
-            case 0 -> 1.5d;
-            case 1 -> 1.5d;
+            case VARIANT_STEAM_LOCOMOTIVE -> 1.5d;
             default -> DEFAULT_WIDTH;
         };
     }
@@ -218,10 +197,7 @@ public class TrainCar extends Entity {
     }
 
     public boolean isLocomotive() {
-        return this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE
-                || this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_ROOF
-                || this.getVariant() == VARIANT_SMALL_STEAM_LOCOMOTIVE_NO_WINDOW
-                || this.getVariant() == VARIANT_STEAM_LOCOMOTIVE;
+        return this.getVariant() == VARIANT_STEAM_LOCOMOTIVE;
     }
 
     @Override
@@ -246,8 +222,8 @@ public class TrainCar extends Entity {
     private void dropCarItem() {
         ItemStack stackToDrop;
         switch (getVariant()) {
-            case 0 -> stackToDrop = new ItemStack(SMALL_STEAM_LOCOMOTIVE.get());
-            default -> stackToDrop = new ItemStack(SMALL_OAK_CARRIAGE.get());
+            case VARIANT_STEAM_LOCOMOTIVE -> stackToDrop = new ItemStack(STEAM_LOCOMOTIVE_ITEM.get());
+            default -> stackToDrop = new ItemStack(STEAM_LOCOMOTIVE_ITEM.get());
         }
         this.spawnAtLocation(stackToDrop);
     }
