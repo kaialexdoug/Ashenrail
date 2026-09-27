@@ -129,7 +129,9 @@ public class TrainAssembly {
     public void accelerate(double throttle) {
         double alignment = this.getLead().getEdgeAlignment();
         this.assemblySpeed += (throttle * alignment) * TrainCar.ACCELERATION;
-        this.assemblySpeed = Math.max(-TrainCar.MAX_SPEED, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed));
+        this.assemblySpeed = alignment == 1
+                ? Math.max(0, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed))
+                : Math.max(-TrainCar.MAX_SPEED, Math.min(0, this.assemblySpeed));
     }
 
     public void applyCoastingFriction() {
@@ -151,17 +153,10 @@ public class TrainAssembly {
     }
 
     public void tickAssembly() {
-        boolean isDriven = false; // assume no player driven locomotive
         for (TrainCar car : this.cars) {
             if (car.isLocomotive() && car.getFirstPassenger() instanceof  Player player) {
                 car.processInput(player);
-                isDriven = true;
             }
-        }
-
-        // if there is no player driven locomotive
-        if (!isDriven) {
-            applyCoastingFriction();
         }
 
         moveAssembly();

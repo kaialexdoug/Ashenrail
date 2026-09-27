@@ -531,7 +531,7 @@ public class TrainCar extends Entity {
     private double wheelRotation = 0.0d;
 
     private void rotateWheel(double step) {
-        double dirFactor = this.isFacingNodeB() ? -1 : 1;
+        double dirFactor = this.getDirFactor();
         this.wheelRotation += (step / this.getWheelRadiusForVariant()) * dirFactor;
     }
 
@@ -589,6 +589,10 @@ public class TrainCar extends Entity {
         Vec3 carForwardDir = new Vec3(-Math.sin(yawRad), 0.0d, Math.cos(yawRad));
 
         return carForwardDir.dot(edgeDir) > 0.0d;
+    }
+
+    public double getDirFactor() {
+        return this.isFacingNodeB() ? -1.0d : 1.0d;
     }
 
     // ---- client-side edge resolution ---------------------------------------------------
@@ -713,13 +717,24 @@ public class TrainCar extends Entity {
     // movement
 
     public static final double MAX_SPEED = 0.4f;
-    public static final double ACCELERATION = 0.01d;
+    public static final double ACCELERATION = 0.001d;
     public double speed = 0.0d;
+    private boolean reversed = false;
+
+    public void toggleReversed() {
+        this.reversed = !this.reversed;
+    }
+
+    public boolean isReversed() {
+        return this.reversed;
+    }
 
     public void accelerate(double throttle) {
         double alignment = getEdgeAlignment();
         this.speed += (throttle * alignment) * ACCELERATION;
-        this.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, this.speed));
+        this.speed = alignment == 1
+                ? Math.max(0, Math.min(MAX_SPEED, this.speed))
+                : Math.max(-MAX_SPEED, Math.min(0, this.speed));
     }
 
     public static final double FRICTION = 0.98d;
@@ -743,11 +758,9 @@ public class TrainCar extends Entity {
         if (!this.isAlone()) {
             if (forwardInput > 0) this.assembly.accelerate(1);
             else if (forwardInput < 0) this.assembly.accelerate(-1);
-            else this.assembly.applyCoastingFriction();
         } else {
             if (forwardInput > 0) accelerate(1);
             else if (forwardInput < 0) accelerate(-1);
-            else applyCoastingFriction();
         }
     }
 
@@ -789,7 +802,7 @@ public class TrainCar extends Entity {
                 if (this.isAlone()) {
                     if (this.isLocomotive() && this.getFirstPassenger() instanceof Player player) {
                         processInput(player);
-                    } else {
+                    } else if (!this.isLocomotive()) {
                         applyCoastingFriction();
                     }
 
