@@ -110,6 +110,8 @@ public class AshenRail
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
+        NetworkPacket.register();
+
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
 

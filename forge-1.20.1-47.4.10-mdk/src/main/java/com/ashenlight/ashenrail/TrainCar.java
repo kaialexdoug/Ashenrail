@@ -37,6 +37,7 @@ public class TrainCar extends Entity {
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DISTANCE_ALONG_EDGE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> WHEEL_ROTATION = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> IS_REVERSED = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.BOOLEAN);
 
     // TrackEdge itself is never networked. Instead we ship the block span the edge covers,
     // which is exact, tiny, and lets the client rebuild an identical edge with pure math.
@@ -64,6 +65,7 @@ public class TrainCar extends Entity {
         this.entityData.define(EDGE_START, Optional.empty());
         this.entityData.define(EDGE_END, Optional.empty());
         this.entityData.define(WHEEL_ROTATION, 0.0f);
+        this.entityData.define(IS_REVERSED, false);
     }
 
     @Override
@@ -176,7 +178,7 @@ public class TrainCar extends Entity {
     public double getCarLength() {
         return switch (this.getVariant()) {
             // official variants
-            case VARIANT_STEAM_LOCOMOTIVE -> 4.0d;
+            case VARIANT_STEAM_LOCOMOTIVE -> 3.0d;
             default -> DEFAULT_LENGTH;
         };
     }
@@ -717,24 +719,32 @@ public class TrainCar extends Entity {
     // movement
 
     public static final double MAX_SPEED = 0.4f;
-    public static final double ACCELERATION = 0.001d;
+    public static final double ACCELERATION = 0.005d;
     public double speed = 0.0d;
-    private boolean reversed = false;
+    public double throttle = 0.0d;
 
     public void toggleReversed() {
-        this.reversed = !this.reversed;
+        this.entityData.set(IS_REVERSED, !this.entityData.get(IS_REVERSED));
     }
 
     public boolean isReversed() {
-        return this.reversed;
+        return this.entityData.get(IS_REVERSED);
     }
 
-    public void accelerate(double throttle) {
+    public void accelerate() {
+        float multiplier = this.isReversed() ? -1 : 1;
         double alignment = getEdgeAlignment();
-        this.speed += (throttle * alignment) * ACCELERATION;
-        this.speed = alignment == 1
-                ? Math.max(0, Math.min(MAX_SPEED, this.speed))
-                : Math.max(-MAX_SPEED, Math.min(0, this.speed));
+        double targetSpeed = this.throttle * alignment * multiplier;
+
+        if (this.speed < targetSpeed) {
+            this.speed += ACCELERATION;
+        }
+
+        if (this.speed > targetSpeed) {
+            this.speed -= ACCELERATION;
+        }
+
+        this.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, this.speed));
     }
 
     public static final double FRICTION = 0.98d;
@@ -755,12 +765,13 @@ public class TrainCar extends Entity {
     public void processInput(Player player) {
         float forwardInput = player.zza;
 
+        this.throttle += forwardInput * ACCELERATION;
+        this.throttle = Math.max(0, Math.min(MAX_SPEED, this.throttle));
+
         if (!this.isAlone()) {
-            if (forwardInput > 0) this.assembly.accelerate(1);
-            else if (forwardInput < 0) this.assembly.accelerate(-1);
+            this.assembly.accelerate();
         } else {
-            if (forwardInput > 0) accelerate(1);
-            else if (forwardInput < 0) accelerate(-1);
+            accelerate();
         }
     }
 

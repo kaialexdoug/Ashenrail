@@ -1,7 +1,5 @@
 package com.ashenlight.ashenrail;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,14 +17,7 @@ public class ClientInputEvents {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             if (REVERSE_KEY.consumeClick()) {
-                Minecraft minecraft = Minecraft.getInstance();
-                Player player = minecraft.player;
-
-                if (player != null) {
-                    if (player.getVehicle() instanceof TrainCar trainCar) {
-                        trainCar.toggleReversed();
-                    }
-                }
+                NetworkPacket.CHANNEL.sendToServer(new ReverseRequest());
             }
         }
     }

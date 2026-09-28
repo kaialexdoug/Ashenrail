@@ -61,6 +61,17 @@ public class TrainAssembly {
         return cars.get(cars.size()-1);
     }
 
+    public List<TrainCar> getLocomotives() {
+        ArrayList<TrainCar> locomotives = new ArrayList<TrainCar>();
+        for (TrainCar car : this.cars) {
+            if (car.isLocomotive()) {
+                locomotives.add(car);
+            }
+        }
+
+        return locomotives;
+    }
+
     // minecraft's tick order appears to be from lower entity id's to higher ones, so we need to get the
     // lowest id car in the assembly in order to determine the coordinator.
     public TrainCar getTickCoordinator() {
@@ -126,12 +137,23 @@ public class TrainAssembly {
         }
     }
 
-    public void accelerate(double throttle) {
-        double alignment = this.getLead().getEdgeAlignment();
-        this.assemblySpeed += (throttle * alignment) * TrainCar.ACCELERATION;
-        this.assemblySpeed = alignment == 1
-                ? Math.max(0, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed))
-                : Math.max(-TrainCar.MAX_SPEED, Math.min(0, this.assemblySpeed));
+    public void accelerate() {
+        double targetSpeed = 0.0d;
+
+        for (TrainCar locomotive : this.getLocomotives()) {
+            double multiplier = locomotive.isReversed() ? -1 : 1;
+            targetSpeed += locomotive.throttle * multiplier * locomotive.getEdgeAlignment();
+        }
+
+        if (this.assemblySpeed < targetSpeed) {
+            this.assemblySpeed += TrainCar.ACCELERATION;
+        }
+
+        if (this.assemblySpeed > targetSpeed) {
+            this.assemblySpeed -= TrainCar.ACCELERATION;
+        }
+
+        this.assemblySpeed = Math.max(0, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed));
     }
 
     public void applyCoastingFriction() {
