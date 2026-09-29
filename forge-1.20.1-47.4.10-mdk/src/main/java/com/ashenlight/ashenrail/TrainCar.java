@@ -736,12 +736,18 @@ public class TrainCar extends Entity {
         double alignment = getEdgeAlignment();
         double targetSpeed = this.throttle * alignment * multiplier;
 
-        if (this.speed < targetSpeed) {
-            this.speed += ACCELERATION;
-        }
+        double difference = targetSpeed - this.speed;
 
-        if (this.speed > targetSpeed) {
-            this.speed -= ACCELERATION;
+        if (this.throttle == 0) {
+            this.applyCoastingFriction();
+        } else {
+            if (Math.abs(difference) <= ACCELERATION) {
+                this.speed = targetSpeed;
+            } else if (difference > 0) {
+                this.speed += ACCELERATION;
+            } else {
+                this.speed -= ACCELERATION;
+            }
         }
 
         this.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, this.speed));
@@ -767,12 +773,6 @@ public class TrainCar extends Entity {
 
         this.throttle += forwardInput * ACCELERATION;
         this.throttle = Math.max(0, Math.min(MAX_SPEED, this.throttle));
-
-        if (!this.isAlone()) {
-            this.assembly.accelerate();
-        } else {
-            accelerate();
-        }
     }
 
     // How much of `step` this car can actually travel before it runs into one end of its edge.
@@ -816,6 +816,7 @@ public class TrainCar extends Entity {
                     } else if (!this.isLocomotive()) {
                         applyCoastingFriction();
                     }
+                    accelerate();
 
                     // move only as far as the edge allows, and stop dead if that cut us short
                     double step = clampStepToEdge(this.speed);

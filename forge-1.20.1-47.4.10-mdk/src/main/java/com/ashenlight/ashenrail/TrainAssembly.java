@@ -145,15 +145,21 @@ public class TrainAssembly {
             targetSpeed += locomotive.throttle * multiplier * locomotive.getEdgeAlignment();
         }
 
-        if (this.assemblySpeed < targetSpeed) {
-            this.assemblySpeed += TrainCar.ACCELERATION;
+        double difference = targetSpeed - this.assemblySpeed;
+
+        if (targetSpeed == 0) {
+            this.applyCoastingFriction();
+        } else {
+            if (Math.abs(difference) <= ACCELERATION) {
+                this.assemblySpeed = targetSpeed;
+            } else if (difference > 0) {
+                this.assemblySpeed += ACCELERATION;
+            } else {
+                this.assemblySpeed -= ACCELERATION;
+            }
         }
 
-        if (this.assemblySpeed > targetSpeed) {
-            this.assemblySpeed -= TrainCar.ACCELERATION;
-        }
-
-        this.assemblySpeed = Math.max(0, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed));
+        this.assemblySpeed = Math.max(-MAX_SPEED, Math.min(TrainCar.MAX_SPEED, this.assemblySpeed));
     }
 
     public void applyCoastingFriction() {
@@ -190,6 +196,8 @@ public class TrainAssembly {
     // anything moves: work out what each car can manage, take the most restrictive answer, then
     // apply that one step to the whole train. One blocked car stops the entire assembly.
     public void moveAssembly() {
+        this.accelerate();
+
         double step = this.assemblySpeed;
 
         // pass 1 - decide. the most restricted car wins; nothing has moved yet.
