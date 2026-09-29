@@ -9,17 +9,13 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.RailState;
 
 public class TrainCarRenderer extends EntityRenderer<TrainCar> {
-
-    private record VariantData(EntityModel<TrainCar> model, ResourceLocation texture) {}
 
     //official models
     private final SteamLocomotiveTest steamLocomotiveTest;
     private final SteamLocomotiveModel steamLocomotiveModel;
-
-    //textures (official)
-    private static final ResourceLocation STEAM_LOCOMOTIVE_TEXTURE = new ResourceLocation(AshenRail.MODID, "./textures/entity/steam_locomotive_texture.png");
 
     public TrainCarRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -30,20 +26,19 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
         this.steamLocomotiveModel = new SteamLocomotiveModel(context.bakeLayer(SteamLocomotiveModel.LAYER_LOCATION));
     }
 
-    // official variants
-    public static final int VARIANT_STEAM_LOCOMOTIVE = 0;
-
-    private VariantData getVariantData(TrainCar trainCar) {
-        return switch (trainCar.getVariant()) {
-            // official
-            case VARIANT_STEAM_LOCOMOTIVE -> new VariantData(this.steamLocomotiveModel, STEAM_LOCOMOTIVE_TEXTURE);
-            default -> new VariantData(this.steamLocomotiveModel, STEAM_LOCOMOTIVE_TEXTURE);
-        };
-    }
-
     @Override
     public ResourceLocation getTextureLocation(TrainCar trainCar) {
-        return getVariantData(trainCar).texture();
+        return new ResourceLocation(
+                AshenRail.MODID,
+                "textures/entity/" + trainCar.getTextureId() + "_texture.png"
+        );
+    }
+
+    private EntityModel<TrainCar> getModel(TrainCar trainCar) {
+        return switch (trainCar.getModelId()) {
+            case "steam_locomotive" -> this.steamLocomotiveModel;
+            default -> this.steamLocomotiveModel;
+        };
     }
 
     @Override
@@ -63,7 +58,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
         poseStack.mulPose(Axis.YP.rotationDegrees(entityYaw));
 
-        EntityModel<TrainCar> model = getVariantData(trainCar).model();
+        EntityModel<TrainCar> model = this.getModel(trainCar);
 
         model.setupAnim(trainCar, 0, 0, partialTicks, 0, 0);
 

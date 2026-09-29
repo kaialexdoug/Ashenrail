@@ -34,7 +34,6 @@ import static com.ashenlight.ashenrail.TrainCarRenderer.*;
 
 public class TrainCar extends Entity {
 
-    private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DISTANCE_ALONG_EDGE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> WHEEL_ROTATION = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> IS_REVERSED = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.BOOLEAN);
@@ -59,7 +58,6 @@ public class TrainCar extends Entity {
 
     @Override
     protected void defineSynchedData() {
-        this.entityData.define(VARIANT, 0);
         this.entityData.define(DISTANCE_ALONG_EDGE, 0.0f);
         this.entityData.define(EDGE_AXIS, AXIS_X);
         this.entityData.define(EDGE_START, Optional.empty());
@@ -70,11 +68,6 @@ public class TrainCar extends Entity {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag compoundTag) {
-        if (compoundTag.contains("Variant")) {
-            int savedVariant = compoundTag.getInt("Variant");
-            setVariant(savedVariant);
-        }
-
         // TrackGraph.edgesByPos is rebuilt from block placements only, so it is empty after a
         // world reload. Rebuild this car's edge from its own saved span instead of relying on it.
         if (compoundTag.contains("EdgeStart") && compoundTag.contains("EdgeEnd")) {
@@ -95,8 +88,6 @@ public class TrainCar extends Entity {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compoundTag) {
-        compoundTag.putInt("Variant", getVariant());
-
         if (this.currentEdge != null) {
             compoundTag.put("EdgeStart", NbtUtils.writeBlockPos(this.currentEdge.startPos));
             compoundTag.put("EdgeEnd", NbtUtils.writeBlockPos(this.currentEdge.endPos));
@@ -156,50 +147,35 @@ public class TrainCar extends Entity {
 
     // VARIANT RELATED STUFF
 
-    private Vec3 getSeatOffsetForVariant(int variant) {
-        return switch(variant) {
-            // official train car variants
-            case VARIANT_STEAM_LOCOMOTIVE -> new Vec3(0.0d, 0.4d, -1.1d);
-            default -> new Vec3(0.0d, 0.6d, 0.0d);
-        };
+    public String getTextureId() {
+        return "default";
+    }
+
+    public String getModelId() {
+        return "default";
+    }
+
+    private Vec3 getSeatOffset() {
+        return new Vec3(0.0d, 0.6d, 0.0d);
     }
 
     private double getWheelRadiusForVariant() {
-        return switch(this.getVariant()) {
-            // official variants
-            case VARIANT_STEAM_LOCOMOTIVE -> SteamLocomotiveModel.WHEEL_RADIUS;
-            default -> SteamLocomotiveModel.WHEEL_RADIUS;
-        };
+        return SteamLocomotiveModel.WHEEL_RADIUS;
     }
 
     public static final double DEFAULT_LENGTH = 4.0d;
     public static final double  DEFAULT_WIDTH = 1.5d;
 
     public double getCarLength() {
-        return switch (this.getVariant()) {
-            // official variants
-            case VARIANT_STEAM_LOCOMOTIVE -> 3.0d;
-            default -> DEFAULT_LENGTH;
-        };
+        return DEFAULT_LENGTH;
     }
 
     public double getCarWidth() {
-        return switch (this.getVariant()) {
-            case VARIANT_STEAM_LOCOMOTIVE -> 1.5d;
-            default -> DEFAULT_WIDTH;
-        };
-    }
-
-    public int getVariant() {
-        return this.entityData.get(VARIANT);
-    }
-
-    public void setVariant(int newVariant) {
-        this.entityData.set(VARIANT, newVariant);
+        return DEFAULT_WIDTH;
     }
 
     public boolean isLocomotive() {
-        return this.getVariant() == VARIANT_STEAM_LOCOMOTIVE;
+        return false;
     }
 
     @Override
@@ -207,7 +183,7 @@ public class TrainCar extends Entity {
         // called once per tick from Entity.rideTick(), never from the renderer - the passenger
         // gets its own xOld -> x frame interpolation exactly like the car does.
         if (this.hasPassenger(passenger)) {
-            Vec3 offset = getSeatOffsetForVariant(getVariant());
+            Vec3 offset = this.getSeatOffset();
 
             double yawRad = Math.toRadians(this.getYRot());
             double rotatedX = offset.x * Math.cos(yawRad) - offset.z * Math.sin(yawRad);
@@ -222,11 +198,7 @@ public class TrainCar extends Entity {
     }
 
     private void dropCarItem() {
-        ItemStack stackToDrop;
-        switch (getVariant()) {
-            case VARIANT_STEAM_LOCOMOTIVE -> stackToDrop = new ItemStack(STEAM_LOCOMOTIVE_ITEM.get());
-            default -> stackToDrop = new ItemStack(STEAM_LOCOMOTIVE_ITEM.get());
-        }
+        ItemStack stackToDrop = new ItemStack(STEAM_LOCOMOTIVE_ITEM.get());
         this.spawnAtLocation(stackToDrop);
     }
 

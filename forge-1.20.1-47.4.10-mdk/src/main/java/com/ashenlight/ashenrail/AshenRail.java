@@ -67,7 +67,7 @@ public class AshenRail
     public static final RegistryObject<Block> NARROW_TRACK = BLOCKS.register("narrow_track", TrackBlock::new);
 
     // official items (and block items)
-    public static final RegistryObject<Item> STEAM_LOCOMOTIVE_ITEM = ITEMS.register("steam_locomotive", () -> new TrainCarItem(VARIANT_STEAM_LOCOMOTIVE, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> STEAM_LOCOMOTIVE_ITEM = ITEMS.register("steam_locomotive", () -> new TrainCarItem(ModEntities.STEAM_LOCOMOTIVE.get(), new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> NARROW_TRACK_ITEM = ITEMS.register("narrow_track", () -> new BlockItem(NARROW_TRACK.get(), new Item.Properties()));
 
     // Creates a creative tab with the id "examplemod:example_tab" for the example item, that is placed after the combat tab

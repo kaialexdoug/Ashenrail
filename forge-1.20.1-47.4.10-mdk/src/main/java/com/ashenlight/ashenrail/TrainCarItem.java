@@ -2,26 +2,23 @@ package com.ashenlight.ashenrail;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.fml.common.Mod;
 
-import static com.ashenlight.ashenrail.Debug.logInGame;
 import static com.ashenlight.ashenrail.TrackBlock.AXIS;
 
 public class TrainCarItem extends Item {
-    private final int variantId;
+    private final EntityType<? extends TrainCar> entityType;
 
-    public TrainCarItem(int variantId, Properties properties) {
+    public TrainCarItem(EntityType<? extends TrainCar> entityType, Properties properties) {
         super(properties);
-        this.variantId = variantId;
+        this.entityType = entityType;
     }
 
     @Override
@@ -34,8 +31,9 @@ public class TrainCarItem extends Item {
         if (level.getBlockState(pos).getBlock() instanceof TrackBlock && !level.isClientSide) {
             TrackEdge edge = TrackGraph.edgesByPos.get(pos.immutable());
             if (edge != null) {
-                TrainCar trainCar = new TrainCar(ModEntities.TRAIN_CAR.get(), level);
-                trainCar.setVariant(variantId); // this makes sure the right train car is being placed!
+                TrainCar trainCar = entityType.create(level);
+
+                if (trainCar == null) return InteractionResult.PASS;
 
                 Direction.Axis axis = state.getValue(AXIS);
 

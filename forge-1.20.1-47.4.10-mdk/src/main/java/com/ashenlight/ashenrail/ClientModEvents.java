@@ -35,6 +35,6 @@ public class ClientModEvents {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(ModEntities.TRAIN_CAR.get(), TrainCarRenderer::new);
+        event.registerEntityRenderer(ModEntities.STEAM_LOCOMOTIVE.get(), TrainCarRenderer::new);
     }
 }
