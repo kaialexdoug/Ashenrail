@@ -41,6 +41,7 @@ public class TrainCar extends Entity {
     private static final EntityDataAccessor<Float> WHEEL_ROTATION = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> IS_REVERSED = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> THROTTLE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
 
     // TrackEdge itself is never networked. Instead we ship the block span the edge covers,
     // which is exact, tiny, and lets the client rebuild an identical edge with pure math.
@@ -69,6 +70,7 @@ public class TrainCar extends Entity {
         this.entityData.define(WHEEL_ROTATION, 0.0f);
         this.entityData.define(IS_REVERSED, false);
         this.entityData.define(THROTTLE, 0.0f);
+        this.entityData.define(SPEED, 0.0f);
     }
 
     @Override
@@ -524,6 +526,27 @@ public class TrainCar extends Entity {
         return this.prevWheelRotation;
     }
 
+    // sound
+
+    private boolean trainSoundPlaying = false;
+    private TrainCarSound trainSound;
+
+
+
+    private void updateTrackClackSound() {
+        double positionDifference = this.getPositionDifference();
+
+        if (positionDifference != 0 && this.trainSound == null) {
+            this.trainSound = new TrainCarSound(this, TRACK_CLACK_SOUND);
+            this.trainSound.startSound();
+        }
+
+        if (this.trainSound != null && positionDifference == 0) {
+            this.trainSound.stopSound();
+            this.trainSound = null;
+        }
+    }
+
     // node system integration
 
     private TrackEdge currentEdge;
@@ -695,6 +718,10 @@ public class TrainCar extends Entity {
         return (dot >= 0) ? 1.0 : -1.0;
     }
 
+    public double getPositionDifference() {
+        return this.distanceAlongEdge - this.prevDistanceAlongEdge;
+    }
+
     // movement
 
     public static final double MAX_SPEED = 0.4f;
@@ -730,6 +757,7 @@ public class TrainCar extends Entity {
         }
 
         this.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, this.speed));
+        this.entityData.set(SPEED, (float) this.speed);
     }
 
     public static final double FRICTION = 0.98d;
@@ -840,10 +868,14 @@ public class TrainCar extends Entity {
             this.distanceAlongEdge = this.entityData.get(DISTANCE_ALONG_EDGE);
             this.prevWheelRotation = this.wheelRotation;
             this.wheelRotation = this.entityData.get(WHEEL_ROTATION);
+            this.speed = this.entityData.get(SPEED);
 
             if (this.currentEdge != null) {
                 setPositionFromEdge();
             }
+
+            // playing sounds
+            updateTrackClackSound();
         }
     }
 }

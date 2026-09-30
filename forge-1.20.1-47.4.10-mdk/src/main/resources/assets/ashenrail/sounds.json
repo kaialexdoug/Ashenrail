@@ -1,0 +1,10 @@
+{
+  "track_clack": {
+    "sounds": [
+      {
+        "name": "ashenrail:track_clack",
+        "stream": true
+      }
+    ]
+  }
+}

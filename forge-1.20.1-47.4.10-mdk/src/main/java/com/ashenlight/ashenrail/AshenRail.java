@@ -6,6 +6,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -32,6 +33,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import net.minecraft.sounds.SoundEvent;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 
@@ -51,6 +53,8 @@ public class AshenRail
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
+    // deferred register for sounds
+    public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, MODID);
     // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "examplemod" namespace
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
@@ -69,6 +73,12 @@ public class AshenRail
     // official items (and block items)
     public static final RegistryObject<Item> STEAM_LOCOMOTIVE_ITEM = ITEMS.register("steam_locomotive", () -> new TrainCarItem(ModEntities.STEAM_LOCOMOTIVE, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> NARROW_TRACK_ITEM = ITEMS.register("narrow_track", () -> new BlockItem(NARROW_TRACK.get(), new Item.Properties()));
+
+    // sounds
+    public static final RegistryObject<SoundEvent> TRACK_CLACK_SOUND = SOUNDS.register("track_clack",
+            () -> SoundEvent.createVariableRangeEvent(
+                    new ResourceLocation(AshenRail.MODID, "track_clack")
+            ));
 
     // Creates a creative tab with the id "examplemod:example_tab" for the example item, that is placed after the combat tab
     public static final RegistryObject<CreativeModeTab> ASHENRAIL_TAB = CREATIVE_MODE_TABS.register("ashenrail_tab", () -> CreativeModeTab.builder()
@@ -93,6 +103,8 @@ public class AshenRail
         BLOCKS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
+        // register the deferred register to the mod event bus so sounds get registered
+        SOUNDS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
 

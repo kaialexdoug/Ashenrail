@@ -1,10 +1,12 @@
 package com.ashenlight.ashenrail.traincarvariants;
 
+import com.ashenlight.ashenrail.AshenRail;
 import com.ashenlight.ashenrail.Debug;
 import com.ashenlight.ashenrail.SteamLocomotiveModel;
 import com.ashenlight.ashenrail.TrainCar;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
