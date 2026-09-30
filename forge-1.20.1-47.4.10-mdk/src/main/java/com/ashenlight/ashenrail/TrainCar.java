@@ -1,5 +1,6 @@
 package com.ashenlight.ashenrail;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -15,7 +16,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MinecartItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -155,16 +158,17 @@ public class TrainCar extends Entity {
         return "default";
     }
 
-    private Vec3 getSeatOffset() {
+    public Vec3 getSeatOffset() {
         return new Vec3(0.0d, 0.6d, 0.0d);
     }
 
-    private double getWheelRadiusForVariant() {
-        return SteamLocomotiveModel.WHEEL_RADIUS;
+    public double getWheelRadius() {
+        return DEFAULT_WHEEL_RADIUS;
     }
 
     public static final double DEFAULT_LENGTH = 4.0d;
     public static final double  DEFAULT_WIDTH = 1.5d;
+    public static final double DEFAULT_WHEEL_RADIUS = 3.0d;
 
     public double getCarLength() {
         return DEFAULT_LENGTH;
@@ -177,6 +181,12 @@ public class TrainCar extends Entity {
     public boolean isLocomotive() {
         return false;
     }
+
+    public void dropCarItem() {
+        ItemStack stackToDrop = new ItemStack(EXAMPLE_ITEM.get());
+        this.spawnAtLocation(stackToDrop);
+    }
+
 
     @Override
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
@@ -195,11 +205,6 @@ public class TrainCar extends Entity {
 
             moveFunction.accept(passenger, x, y, z);
         }
-    }
-
-    private void dropCarItem() {
-        ItemStack stackToDrop = new ItemStack(STEAM_LOCOMOTIVE_ITEM.get());
-        this.spawnAtLocation(stackToDrop);
     }
 
     protected AABB makeBoundingBox(double x, double y, double z) {
@@ -506,7 +511,7 @@ public class TrainCar extends Entity {
 
     private void rotateWheel(double step) {
         double dirFactor = this.getDirFactor();
-        this.wheelRotation += (step / this.getWheelRadiusForVariant()) * dirFactor;
+        this.wheelRotation += (step / this.getWheelRadius()) * dirFactor;
     }
 
     public double getWheelRotation() {

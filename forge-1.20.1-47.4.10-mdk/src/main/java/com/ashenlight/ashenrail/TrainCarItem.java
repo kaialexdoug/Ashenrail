@@ -10,15 +10,16 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.RegistryObject;
 
 import static com.ashenlight.ashenrail.TrackBlock.AXIS;
 
 public class TrainCarItem extends Item {
-    private final EntityType<? extends TrainCar> entityType;
+    private final RegistryObject<? extends EntityType<? extends TrainCar>> registryObject;
 
-    public TrainCarItem(EntityType<? extends TrainCar> entityType, Properties properties) {
+    public TrainCarItem(RegistryObject<? extends EntityType<? extends TrainCar>> registryObject, Properties properties) {
         super(properties);
-        this.entityType = entityType;
+        this.registryObject = registryObject;
     }
 
     @Override
@@ -31,7 +32,7 @@ public class TrainCarItem extends Item {
         if (level.getBlockState(pos).getBlock() instanceof TrackBlock && !level.isClientSide) {
             TrackEdge edge = TrackGraph.edgesByPos.get(pos.immutable());
             if (edge != null) {
-                TrainCar trainCar = entityType.create(level);
+                TrainCar trainCar = registryObject.get().create(level);
 
                 if (trainCar == null) return InteractionResult.PASS;
 
