@@ -40,6 +40,7 @@ public class TrainCar extends Entity {
     private static final EntityDataAccessor<Float> DISTANCE_ALONG_EDGE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> WHEEL_ROTATION = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> IS_REVERSED = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Float> THROTTLE = SynchedEntityData.defineId(TrainCar.class, EntityDataSerializers.FLOAT);
 
     // TrackEdge itself is never networked. Instead we ship the block span the edge covers,
     // which is exact, tiny, and lets the client rebuild an identical edge with pure math.
@@ -67,6 +68,7 @@ public class TrainCar extends Entity {
         this.entityData.define(EDGE_END, Optional.empty());
         this.entityData.define(WHEEL_ROTATION, 0.0f);
         this.entityData.define(IS_REVERSED, false);
+        this.entityData.define(THROTTLE, 0.0f);
     }
 
     @Override
@@ -750,6 +752,7 @@ public class TrainCar extends Entity {
 
         this.throttle += forwardInput * ACCELERATION;
         this.throttle = Math.max(0, Math.min(MAX_SPEED, this.throttle));
+        this.entityData.set(THROTTLE, (float) throttle);
     }
 
     // How much of `step` this car can actually travel before it runs into one end of its edge.
