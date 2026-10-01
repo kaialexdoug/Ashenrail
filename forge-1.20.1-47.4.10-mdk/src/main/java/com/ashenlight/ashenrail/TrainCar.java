@@ -527,11 +527,7 @@ public class TrainCar extends Entity {
     }
 
     // sound
-
-    private boolean trainSoundPlaying = false;
     private TrainCarSound trainSound;
-
-
 
     private void updateTrackClackSound() {
         double positionDifference = this.getPositionDifference();
@@ -539,6 +535,10 @@ public class TrainCar extends Entity {
         if (positionDifference != 0 && this.trainSound == null) {
             this.trainSound = new TrainCarSound(this, TRACK_CLACK_SOUND);
             this.trainSound.startSound();
+        }
+
+        if (this.trainSound != null) {
+            this.trainSound.updateVolume();
         }
 
         if (this.trainSound != null && positionDifference == 0) {

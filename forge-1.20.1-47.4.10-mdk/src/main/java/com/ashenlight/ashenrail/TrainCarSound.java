@@ -30,10 +30,29 @@ public class TrainCarSound extends AbstractTickableSoundInstance {
         this.stop();
     }
 
+    public void updateVolume() {
+        float threshold = 0.2f;
+        float movement = (float) this.trainCar.getAbsSpeed();
+
+        if (movement >= threshold) {
+            this.volume = 1.0f;
+        } else {
+            this.volume = movement / threshold;
+        }
+    }
+
     @Override
     public void tick() {
+        if (this.trainCar.isRemoved()) {
+            this.stopSound();
+            return;
+        }
+
         this.x = trainCar.getX();
         this.y = trainCar.getY();
         this.z = trainCar.getZ();
+
+        // making sure that the train sound fades in and out properly
+
     }
 }
