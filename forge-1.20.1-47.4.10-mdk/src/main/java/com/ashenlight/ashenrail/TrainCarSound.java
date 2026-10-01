@@ -23,10 +23,12 @@ public class TrainCarSound extends AbstractTickableSoundInstance {
     }
 
     public void startSound() {
+        System.out.println("STARTING SOUND INSTANCE - TrainCar: " + this.trainCar.getId());
         Minecraft.getInstance().getSoundManager().play(this);
     }
 
     public void stopSound() {
+        System.out.println("STOPPING SOUND INSTANCE - TrainCar: " + this.trainCar.getId());
         this.stop();
     }
 
@@ -41,6 +43,13 @@ public class TrainCarSound extends AbstractTickableSoundInstance {
         }
     }
 
+    public void updatePitch() {
+        float maxPitch = 1.5f;
+        float movement = (float) this.trainCar.getAbsSpeed();
+
+        this.pitch = 1.0f + (movement / (float) TrainCar.MAX_SPEED) * (maxPitch - 1.0f);
+    }
+
     @Override
     public void tick() {
         if (this.trainCar.isRemoved()) {
@@ -51,8 +60,5 @@ public class TrainCarSound extends AbstractTickableSoundInstance {
         this.x = trainCar.getX();
         this.y = trainCar.getY();
         this.z = trainCar.getZ();
-
-        // making sure that the train sound fades in and out properly
-
     }
 }

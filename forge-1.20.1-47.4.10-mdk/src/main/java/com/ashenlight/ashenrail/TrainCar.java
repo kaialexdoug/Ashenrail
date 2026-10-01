@@ -530,18 +530,18 @@ public class TrainCar extends Entity {
     private TrainCarSound trainSound;
 
     private void updateTrackClackSound() {
-        double positionDifference = this.getPositionDifference();
 
-        if (positionDifference != 0 && this.trainSound == null) {
+        if (this.speed != 0 && this.trainSound == null) {
             this.trainSound = new TrainCarSound(this, TRACK_CLACK_SOUND);
             this.trainSound.startSound();
         }
 
         if (this.trainSound != null) {
             this.trainSound.updateVolume();
+            this.trainSound.updatePitch();
         }
 
-        if (this.trainSound != null && positionDifference == 0) {
+        if (this.trainSound != null && this.speed == 0) {
             this.trainSound.stopSound();
             this.trainSound = null;
         }
@@ -757,7 +757,6 @@ public class TrainCar extends Entity {
         }
 
         this.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, this.speed));
-        this.entityData.set(SPEED, (float) this.speed);
     }
 
     public static final double FRICTION = 0.98d;
@@ -834,6 +833,7 @@ public class TrainCar extends Entity {
                     this.assembly.tickAssembly();
                 }
 
+                this.entityData.set(SPEED, (float) this.speed);
                 this.rotateWheel(this.distanceAlongEdge - this.prevDistanceAlongEdge);
 
                 // updating position to the server
