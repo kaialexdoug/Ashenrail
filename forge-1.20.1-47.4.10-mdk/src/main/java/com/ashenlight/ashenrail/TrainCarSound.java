@@ -23,12 +23,10 @@ public class TrainCarSound extends AbstractTickableSoundInstance {
     }
 
     public void startSound() {
-        System.out.println("STARTING SOUND INSTANCE - TrainCar: " + this.trainCar.getId());
         Minecraft.getInstance().getSoundManager().play(this);
     }
 
     public void stopSound() {
-        System.out.println("STOPPING SOUND INSTANCE - TrainCar: " + this.trainCar.getId());
         this.stop();
     }
 
