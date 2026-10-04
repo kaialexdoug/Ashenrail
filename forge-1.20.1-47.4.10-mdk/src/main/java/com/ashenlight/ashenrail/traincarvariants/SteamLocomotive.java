@@ -1,12 +1,8 @@
 package com.ashenlight.ashenrail.traincarvariants;
 
-import com.ashenlight.ashenrail.AshenRail;
-import com.ashenlight.ashenrail.Debug;
 import com.ashenlight.ashenrail.SteamLocomotiveModel;
 import com.ashenlight.ashenrail.TrainCar;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -69,14 +65,18 @@ public class SteamLocomotive extends TrainCar {
 
         DustParticleOptions particleOptions = new DustParticleOptions(color, scale);
 
-        double yOffset = 2.5d;
-        double zOffset = 1.1d * this.getEdgeAlignment();
+        Vec3 offset = new Vec3(0.0d, 2.5d, 1.1d);
+
+        double yawRad = Math.toRadians(this.getYRot());
+
+        double rotatedX = offset.x * Math.cos(yawRad) - offset.z * Math.sin(yawRad);
+        double rotatedZ = offset.x * Math.sin(yawRad) + offset.z * Math.cos(yawRad);
 
         this.level().addParticle(
                 particleOptions,
-                this.position().x,
-                this.position().y + yOffset,
-                this.position().z + zOffset,
+                this.position().x + rotatedX,
+                this.position().y + offset.y,
+                this.position().z + rotatedZ,
                 0.0d, yVelocity, 0.0d
         );
     }

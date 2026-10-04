@@ -1,5 +1,4 @@
-package com.ashenlight.ashenrail;
-// Made with Blockbench 5.2.1
+package com.ashenlight.ashenrail;// Made with Blockbench 5.2.1
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
@@ -17,12 +16,6 @@ import net.minecraft.world.entity.Entity;
 public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
 	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation("modid", "steamlocomotivemodel"), "main");
-	private final ModelPart trackreferences;
-	private final ModelPart trackreference;
-	private final ModelPart trackreference2;
-	private final ModelPart trackreference4;
-	private final ModelPart trackreference3;
-	private final ModelPart trackreference5;
 	private final ModelPart wheelandaxle;
 	private final ModelPart wheel2;
 	private final ModelPart innerrims2;
@@ -52,24 +45,22 @@ public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 	private final ModelPart spokes6;
 	private final ModelPart pistonleft;
 	private final ModelPart pistonright;
-	private final ModelPart boiler;
-	private final ModelPart boilerfront;
+	private final ModelPart underside;
+	private final ModelPart couplerfront;
+	private final ModelPart couplerback;
+	private final ModelPart wholebody;
 	private final ModelPart body;
 	private final ModelPart buffer;
 	private final ModelPart cab;
 	private final ModelPart seat;
 	private final ModelPart smokestack;
-	private final ModelPart couplerfront;
-	private final ModelPart couplerback;
-	private final ModelPart bb_main;
+	private final ModelPart headlight;
+	private final ModelPart headlightsurrounding;
+	private final ModelPart headlightbulb;
+	private final ModelPart boiler;
+	private final ModelPart boilerfront;
 
 	public SteamLocomotiveModel(ModelPart root) {
-		this.trackreferences = root.getChild("trackreferences");
-		this.trackreference = this.trackreferences.getChild("trackreference");
-		this.trackreference2 = this.trackreferences.getChild("trackreference2");
-		this.trackreference4 = this.trackreferences.getChild("trackreference4");
-		this.trackreference3 = this.trackreferences.getChild("trackreference3");
-		this.trackreference5 = this.trackreferences.getChild("trackreference5");
 		this.wheelandaxle = root.getChild("wheelandaxle");
 		this.wheel2 = this.wheelandaxle.getChild("wheel2");
 		this.innerrims2 = this.wheel2.getChild("innerrims2");
@@ -99,88 +90,25 @@ public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 		this.spokes6 = this.wheel6.getChild("spokes6");
 		this.pistonleft = root.getChild("pistonleft");
 		this.pistonright = root.getChild("pistonright");
-		this.boiler = root.getChild("boiler");
-		this.boilerfront = this.boiler.getChild("boilerfront");
-		this.body = root.getChild("body");
+		this.underside = root.getChild("underside");
+		this.couplerfront = this.underside.getChild("couplerfront");
+		this.couplerback = this.underside.getChild("couplerback");
+		this.wholebody = root.getChild("wholebody");
+		this.body = this.wholebody.getChild("body");
 		this.buffer = this.body.getChild("buffer");
-		this.cab = root.getChild("cab");
+		this.cab = this.wholebody.getChild("cab");
 		this.seat = this.cab.getChild("seat");
-		this.smokestack = root.getChild("smokestack");
-		this.couplerfront = root.getChild("couplerfront");
-		this.couplerback = root.getChild("couplerback");
-		this.bb_main = root.getChild("bb_main");
+		this.smokestack = this.wholebody.getChild("smokestack");
+		this.headlight = this.wholebody.getChild("headlight");
+		this.headlightsurrounding = this.headlight.getChild("headlightsurrounding");
+		this.headlightbulb = this.headlight.getChild("headlightbulb");
+		this.boiler = this.wholebody.getChild("boiler");
+		this.boilerfront = this.boiler.getChild("boilerfront");
 	}
 
 	public static LayerDefinition createBodyLayer() {
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
-
-		PartDefinition trackreferences = partdefinition.addOrReplaceChild("trackreferences", CubeListBuilder.create(), PartPose.offset(7.0F, 24.0F, -8.0F));
-
-		PartDefinition trackreference = trackreferences.addOrReplaceChild("trackreference", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -1.3F, 10.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 10.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 2.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 2.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.3F, 2.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 10.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.0F, 0.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.0F, -2.0F, 0.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.5F, -3.0F, 0.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.0F, 0.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.5F, -3.0F, 0.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.0F, -2.0F, 0.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
-
-		PartDefinition trackreference2 = trackreferences.addOrReplaceChild("trackreference2", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 18.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 26.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, -32.0F));
-
-		PartDefinition trackreference4 = trackreferences.addOrReplaceChild("trackreference4", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 18.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 26.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
-
-		PartDefinition trackreference3 = trackreferences.addOrReplaceChild("trackreference3", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 18.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 26.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, -32.0F));
-
-		PartDefinition trackreference5 = trackreferences.addOrReplaceChild("trackreference5", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 26.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 18.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.3F, 18.0F, 3.0F, 1.3F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-17.0F, -1.0F, 26.0F, 20.0F, 1.0F, 4.0F, new CubeDeformation(-0.01F))
-		.texOffs(0, 0).addBox(-15.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-14.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-2.0F, -1.0F, 16.0F, 3.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.5F, -3.0F, 16.0F, 2.0F, 1.0F, 16.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(-1.0F, -2.0F, 16.0F, 1.0F, 2.0F, 16.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 16.0F));
 
 		PartDefinition wheelandaxle = partdefinition.addOrReplaceChild("wheelandaxle", CubeListBuilder.create().texOffs(216, 144).addBox(-14.5F, -1.0F, -1.0F, 16.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(6.5F, 16.1716F, -14.0F));
 
@@ -402,13 +330,88 @@ public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 		.texOffs(68, 266).addBox(0.0F, -1.0F, -15.0F, 1.0F, 2.0F, 2.0F, new CubeDeformation(0.2F))
 		.texOffs(74, 266).addBox(0.0F, -1.0F, -1.0F, 1.0F, 2.0F, 2.0F, new CubeDeformation(0.2F)), PartPose.offset(8.0F, 13.0F, 0.0F));
 
-		PartDefinition boiler = partdefinition.addOrReplaceChild("boiler", CubeListBuilder.create().texOffs(76, 49).addBox(-2.5F, 4.0355F, -15.5F, 5.0F, 2.0F, 31.0F, new CubeDeformation(-0.01F))
+		PartDefinition underside = partdefinition.addOrReplaceChild("underside", CubeListBuilder.create().texOffs(0, 239).addBox(-3.0F, -4.0F, -52.0F, 6.0F, 4.0F, 5.0F, new CubeDeformation(0.0F))
+		.texOffs(53, 218).addBox(-1.0F, -7.0F, -51.0F, 2.0F, 6.0F, 4.0F, new CubeDeformation(0.0F))
+		.texOffs(70, 216).addBox(-1.0F, -2.0F, -42.0F, 2.0F, 2.0F, 29.0F, new CubeDeformation(0.0F))
+		.texOffs(216, 100).addBox(-1.0F, -6.0F, -42.0F, 2.0F, 2.0F, 29.0F, new CubeDeformation(0.0F))
+		.texOffs(132, 238).addBox(-3.0F, -7.0F, -47.0F, 6.0F, 8.0F, 10.0F, new CubeDeformation(0.0F))
+		.texOffs(220, 32).addBox(-3.0F, -7.0F, -33.0F, 6.0F, 8.0F, 10.0F, new CubeDeformation(0.0F))
+		.texOffs(218, 66).addBox(-3.0F, -7.0F, -19.0F, 6.0F, 8.0F, 10.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 17.0F, 28.0F));
+
+		PartDefinition couplerfront = underside.addOrReplaceChild("couplerfront", CubeListBuilder.create().texOffs(148, 113).addBox(-1.0F, -1.0F, -3.0F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(128, 47).addBox(-2.0F, -1.0F, -2.0F, 3.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(188, 244).addBox(-2.0F, -1.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(144, 46).addBox(-1.0F, -1.0F, 0.0F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(252, 145).addBox(1.0F, -1.0F, -2.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
+
+		PartDefinition couplerback = underside.addOrReplaceChild("couplerback", CubeListBuilder.create().texOffs(154, 113).addBox(-1.0F, -1.0F, -3.0F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(136, 47).addBox(-2.0F, -1.0F, -2.0F, 3.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(258, 145).addBox(-2.0F, -1.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(160, 113).addBox(-1.0F, -1.0F, 0.0F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(180, 258).addBox(1.0F, -1.0F, -2.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, 0.0F, -55.0F, 0.0F, 3.1416F, 0.0F));
+
+		PartDefinition wholebody = partdefinition.addOrReplaceChild("wholebody", CubeListBuilder.create(), PartPose.offset(0.0F, 15.0F, -6.0F));
+
+		PartDefinition body = wholebody.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-8.0F, -6.0F, -18.0F, 16.0F, 1.0F, 48.0F, new CubeDeformation(0.0F))
+		.texOffs(22, 239).addBox(6.0F, -4.0F, 26.0F, 3.0F, 5.0F, 4.0F, new CubeDeformation(0.0F))
+		.texOffs(36, 239).addBox(-9.0F, -4.0F, 26.0F, 3.0F, 5.0F, 4.0F, new CubeDeformation(0.0F))
+		.texOffs(218, 84).addBox(-7.0F, -5.0F, 29.0F, 14.0F, 7.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(0, 49).addBox(-4.0F, -8.0F, -1.0F, 8.0F, 4.0F, 30.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
+
+		PartDefinition buffer = body.addOrReplaceChild("buffer", CubeListBuilder.create().texOffs(72, 112).addBox(-0.5F, -0.5F, -1.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(212, 248).addBox(-10.5F, -1.5F, -0.5F, 3.0F, 3.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(72, 110).addBox(-9.5F, -0.5F, -1.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(164, 238).addBox(-11.5F, -2.5F, -2.5F, 14.0F, 5.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(258, 96).addBox(-1.5F, -1.5F, -0.5F, 3.0F, 3.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(4.5F, -2.5F, 33.5F));
+
+		PartDefinition cab = wholebody.addOrReplaceChild("cab", CubeListBuilder.create().texOffs(148, 100).addBox(2.1514F, 6.5541F, 1.0F, 16.0F, 12.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(132, 216).addBox(4.1514F, -4.4459F, -17.0F, 12.0F, 1.0F, 21.0F, new CubeDeformation(0.0F))
+		.texOffs(218, 97).addBox(3.1514F, -3.4459F, 1.0F, 14.0F, 2.0F, 1.0F, new CubeDeformation(0.0F))
+		.texOffs(194, 238).addBox(3.1514F, -3.4459F, -15.0F, 14.0F, 2.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(-10.1514F, -24.5541F, -3.0F));
+
+		PartDefinition cabroofside_r1 = cab.addOrReplaceChild("cabroofside_r1", CubeListBuilder.create().texOffs(0, 217).addBox(1.0F, -1.0F, -17.0F, 5.0F, 1.0F, 21.0F, new CubeDeformation(-0.01F)), PartPose.offsetAndRotation(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, -0.6545F));
+
+		PartDefinition cabroofside_r2 = cab.addOrReplaceChild("cabroofside_r2", CubeListBuilder.create().texOffs(198, 216).addBox(-6.0F, -1.0F, -17.0F, 5.0F, 1.0F, 21.0F, new CubeDeformation(-0.01F)), PartPose.offsetAndRotation(20.3027F, 0.0F, 0.0F, 0.0F, 0.0F, 0.6545F));
+
+		PartDefinition roofpillar_r1 = cab.addOrReplaceChild("roofpillar_r1", CubeListBuilder.create().texOffs(174, 263).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.1514F, 3.5541F, -9.0F, 0.0F, 1.5708F, 0.0F));
+
+		PartDefinition roofpillar_r2 = cab.addOrReplaceChild("roofpillar_r2", CubeListBuilder.create().texOffs(168, 263).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.1514F, 3.5541F, 6.0F, 0.0F, 1.5708F, 0.0F));
+
+		PartDefinition roofpillar_r3 = cab.addOrReplaceChild("roofpillar_r3", CubeListBuilder.create().texOffs(162, 263).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(17.1514F, 3.5541F, 6.0F, 0.0F, 1.5708F, 0.0F));
+
+		PartDefinition roofpillar_r4 = cab.addOrReplaceChild("roofpillar_r4", CubeListBuilder.create().texOffs(192, 261).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(17.1514F, 3.5541F, -9.0F, 0.0F, 1.5708F, 0.0F));
+
+		PartDefinition cabrear_r1 = cab.addOrReplaceChild("cabrear_r1", CubeListBuilder.create().texOffs(24, 255).addBox(4.0F, -9.0F, 0.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(21.1514F, 15.5541F, -14.0F, 0.0F, 3.1416F, 0.0F));
+
+		PartDefinition cabrear_r2 = cab.addOrReplaceChild("cabrear_r2", CubeListBuilder.create().texOffs(140, 33).addBox(5.0F, -9.0F, 0.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(10.1514F, 15.5541F, -14.0F, 0.0F, 3.1416F, 0.0F));
+
+		PartDefinition cabside_r1 = cab.addOrReplaceChild("cabside_r1", CubeListBuilder.create().texOffs(216, 131).addBox(-8.0F, -9.0F, 0.0F, 16.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(3.1514F, 15.5541F, -7.0F, 0.0F, -1.5708F, 0.0F));
+
+		PartDefinition cabside_r2 = cab.addOrReplaceChild("cabside_r2", CubeListBuilder.create().texOffs(182, 100).addBox(-8.0F, -9.0F, 0.0F, 16.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(18.1514F, 15.5541F, -7.0F, 0.0F, -1.5708F, 0.0F));
+
+		PartDefinition seat = cab.addOrReplaceChild("seat", CubeListBuilder.create().texOffs(34, 266).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(224, 238).addBox(-3.0F, -2.0F, -3.0F, 6.0F, 2.0F, 6.0F, new CubeDeformation(0.0F)), PartPose.offset(10.1514F, 16.5541F, -7.0F));
+
+		PartDefinition smokestack = wholebody.addOrReplaceChild("smokestack", CubeListBuilder.create().texOffs(128, 33).addBox(-1.5F, -3.0F, -1.5F, 3.0F, 11.0F, 3.0F, new CubeDeformation(0.0F))
+		.texOffs(194, 241).addBox(-2.0F, -2.0F, -2.0F, 4.0F, 2.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -26.0F, 25.5F));
+
+		PartDefinition headlight = wholebody.addOrReplaceChild("headlight", CubeListBuilder.create().texOffs(146, 34).addBox(1.0F, -2.0F, 0.0F, 0.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(249, 98).addBox(-1.0F, -2.0F, 0.0F, 2.0F, 0.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(146, 32).addBox(-1.0F, -2.0F, 0.0F, 0.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -11.0F, 30.0F));
+
+		PartDefinition headlightsurrounding = headlight.addOrReplaceChild("headlightsurrounding", CubeListBuilder.create().texOffs(0, 0).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(2, 2).addBox(1.0F, -1.0F, -1.0F, 0.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
+		.texOffs(0, 0).addBox(-1.0F, -1.0F, -1.0F, 0.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
+
+		PartDefinition headlightbulb = headlight.addOrReplaceChild("headlightbulb", CubeListBuilder.create().texOffs(2, 2).addBox(-1.0F, -2.0F, 1.0F, 2.0F, 2.0F, 0.0F, new CubeDeformation(-0.03F)), PartPose.offset(0.0F, 0.0F, 0.0F));
+
+		PartDefinition boiler = wholebody.addOrReplaceChild("boiler", CubeListBuilder.create().texOffs(76, 49).addBox(-2.5F, 4.0355F, -15.5F, 5.0F, 2.0F, 31.0F, new CubeDeformation(-0.01F))
 		.texOffs(0, 116).addBox(-2.5F, -6.0355F, -15.5F, 5.0F, 2.0F, 31.0F, new CubeDeformation(-0.01F))
 		.texOffs(220, 54).addBox(-2.0F, -7.9645F, -10.5F, 4.0F, 2.0F, 9.0F, new CubeDeformation(0.0F))
 		.texOffs(52, 238).addBox(-7.0F, 2.0355F, -10.5F, 3.0F, 4.0F, 5.0F, new CubeDeformation(0.0F))
 		.texOffs(52, 229).addBox(4.0F, 2.0355F, -10.5F, 3.0F, 4.0F, 5.0F, new CubeDeformation(0.0F))
 		.texOffs(122, 247).addBox(4.0F, 2.0F, 6.0F, 2.0F, 4.0F, 2.0F, new CubeDeformation(0.0F))
-		.texOffs(264, 30).addBox(-6.0F, 2.0F, 6.0F, 2.0F, 4.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 2.9645F, 8.5F));
+		.texOffs(264, 30).addBox(-6.0F, 2.0F, 6.0F, 2.0F, 4.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -12.0355F, 14.5F));
 
 		PartDefinition boilerside_r1 = boiler.addOrReplaceChild("boilerside_r1", CubeListBuilder.create().texOffs(144, 115).addBox(-3.0F, -1.0F, -30.0F, 5.0F, 2.0F, 31.0F, new CubeDeformation(-0.01F)), PartPose.offsetAndRotation(-5.0355F, -0.5F, 14.5F, 0.0F, 0.0F, -1.5708F));
 
@@ -434,73 +437,6 @@ public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 
 		PartDefinition boilerfront_r3 = boilerfront.addOrReplaceChild("boilerfront_r3", CubeListBuilder.create().texOffs(0, 149).addBox(-6.8284F, -9.6568F, -15.5F, 4.0F, 3.0F, 31.0F, new CubeDeformation(0.0F))
 		.texOffs(210, 182).addBox(-6.8284F, -3.0F, -15.5F, 4.0F, 3.0F, 31.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, 6.8284F, 0.0F, 0.0F, 0.0F, 0.7854F));
-
-		PartDefinition body = partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-8.0F, -6.0F, -18.0F, 16.0F, 1.0F, 48.0F, new CubeDeformation(0.0F))
-		.texOffs(22, 239).addBox(6.0F, -4.0F, 26.0F, 3.0F, 5.0F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(36, 239).addBox(-9.0F, -4.0F, 26.0F, 3.0F, 5.0F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(218, 84).addBox(-7.0F, -5.0F, 29.0F, 14.0F, 7.0F, 2.0F, new CubeDeformation(0.0F))
-		.texOffs(218, 66).addBox(-3.0F, -5.0F, 15.0F, 6.0F, 8.0F, 10.0F, new CubeDeformation(0.0F))
-		.texOffs(220, 32).addBox(-3.0F, -5.0F, 1.0F, 6.0F, 8.0F, 10.0F, new CubeDeformation(0.0F))
-		.texOffs(132, 238).addBox(-3.0F, -5.0F, -13.0F, 6.0F, 8.0F, 10.0F, new CubeDeformation(0.0F))
-		.texOffs(70, 216).addBox(-1.0F, 0.0F, -8.0F, 2.0F, 2.0F, 29.0F, new CubeDeformation(0.0F))
-		.texOffs(216, 100).addBox(-1.0F, -4.0F, -8.0F, 2.0F, 2.0F, 29.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 49).addBox(-4.0F, -8.0F, -1.0F, 8.0F, 4.0F, 30.0F, new CubeDeformation(0.0F))
-		.texOffs(53, 218).addBox(-1.0F, -5.0F, -17.0F, 2.0F, 6.0F, 4.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 239).addBox(-3.0F, -2.0F, -18.0F, 6.0F, 4.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 15.0F, -6.0F));
-
-		PartDefinition buffer = body.addOrReplaceChild("buffer", CubeListBuilder.create().texOffs(72, 112).addBox(-0.5F, -0.5F, -1.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(212, 248).addBox(-10.5F, -1.5F, -0.5F, 3.0F, 3.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(72, 110).addBox(-9.5F, -0.5F, -1.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(164, 238).addBox(-11.5F, -2.5F, -2.5F, 14.0F, 5.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(258, 96).addBox(-1.5F, -1.5F, -0.5F, 3.0F, 3.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(4.5F, -2.5F, 33.5F));
-
-		PartDefinition cab = partdefinition.addOrReplaceChild("cab", CubeListBuilder.create().texOffs(148, 100).addBox(2.1514F, 6.5541F, 1.0F, 16.0F, 12.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(132, 216).addBox(4.1514F, -4.4459F, -17.0F, 12.0F, 1.0F, 21.0F, new CubeDeformation(0.0F))
-		.texOffs(218, 97).addBox(3.1514F, -3.4459F, 1.0F, 14.0F, 2.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(194, 238).addBox(3.1514F, -3.4459F, -15.0F, 14.0F, 2.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(-10.1514F, -9.5541F, -9.0F));
-
-		PartDefinition cabroofside_r1 = cab.addOrReplaceChild("cabroofside_r1", CubeListBuilder.create().texOffs(0, 217).addBox(1.0F, -1.0F, -17.0F, 5.0F, 1.0F, 21.0F, new CubeDeformation(-0.01F)), PartPose.offsetAndRotation(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, -0.6545F));
-
-		PartDefinition cabroofside_r2 = cab.addOrReplaceChild("cabroofside_r2", CubeListBuilder.create().texOffs(198, 216).addBox(-6.0F, -1.0F, -17.0F, 5.0F, 1.0F, 21.0F, new CubeDeformation(-0.01F)), PartPose.offsetAndRotation(20.3027F, 0.0F, 0.0F, 0.0F, 0.0F, 0.6545F));
-
-		PartDefinition roofpillar_r1 = cab.addOrReplaceChild("roofpillar_r1", CubeListBuilder.create().texOffs(174, 263).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.1514F, 3.5541F, -9.0F, 0.0F, 1.5708F, 0.0F));
-
-		PartDefinition roofpillar_r2 = cab.addOrReplaceChild("roofpillar_r2", CubeListBuilder.create().texOffs(168, 263).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.1514F, 3.5541F, 6.0F, 0.0F, 1.5708F, 0.0F));
-
-		PartDefinition roofpillar_r3 = cab.addOrReplaceChild("roofpillar_r3", CubeListBuilder.create().texOffs(162, 263).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(17.1514F, 3.5541F, 6.0F, 0.0F, 1.5708F, 0.0F));
-
-		PartDefinition roofpillar_r4 = cab.addOrReplaceChild("roofpillar_r4", CubeListBuilder.create().texOffs(192, 261).addBox(4.0F, -6.0F, 0.0F, 2.0F, 9.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(17.1514F, 3.5541F, -9.0F, 0.0F, 1.5708F, 0.0F));
-
-		PartDefinition cabrear_r1 = cab.addOrReplaceChild("cabrear_r1", CubeListBuilder.create().texOffs(24, 255).addBox(4.0F, -9.0F, 0.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(21.1514F, 15.5541F, -14.0F, 0.0F, 3.1416F, 0.0F));
-
-		PartDefinition cabrear_r2 = cab.addOrReplaceChild("cabrear_r2", CubeListBuilder.create().texOffs(140, 33).addBox(5.0F, -9.0F, 0.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(10.1514F, 15.5541F, -14.0F, 0.0F, 3.1416F, 0.0F));
-
-		PartDefinition cabside_r1 = cab.addOrReplaceChild("cabside_r1", CubeListBuilder.create().texOffs(216, 131).addBox(-8.0F, -9.0F, 0.0F, 16.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(3.1514F, 15.5541F, -7.0F, 0.0F, -1.5708F, 0.0F));
-
-		PartDefinition cabside_r2 = cab.addOrReplaceChild("cabside_r2", CubeListBuilder.create().texOffs(182, 100).addBox(-8.0F, -9.0F, 0.0F, 16.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(18.1514F, 15.5541F, -7.0F, 0.0F, -1.5708F, 0.0F));
-
-		PartDefinition seat = cab.addOrReplaceChild("seat", CubeListBuilder.create().texOffs(34, 266).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F))
-		.texOffs(224, 238).addBox(-3.0F, -2.0F, -3.0F, 6.0F, 2.0F, 6.0F, new CubeDeformation(0.0F)), PartPose.offset(10.1514F, 16.5541F, -7.0F));
-
-		PartDefinition smokestack = partdefinition.addOrReplaceChild("smokestack", CubeListBuilder.create().texOffs(128, 33).addBox(-1.5F, -3.0F, -1.5F, 3.0F, 11.0F, 3.0F, new CubeDeformation(0.0F))
-		.texOffs(194, 241).addBox(-2.0F, -2.0F, -2.0F, 4.0F, 2.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -11.0F, 19.5F));
-
-		PartDefinition couplerfront = partdefinition.addOrReplaceChild("couplerfront", CubeListBuilder.create().texOffs(148, 113).addBox(-1.0F, -1.0F, -3.0F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(128, 47).addBox(-2.0F, -1.0F, -2.0F, 3.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(188, 244).addBox(-2.0F, -1.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
-		.texOffs(144, 46).addBox(-1.0F, -1.0F, 0.0F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(252, 145).addBox(1.0F, -1.0F, -2.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 17.0F, 28.0F));
-
-		PartDefinition couplerback = partdefinition.addOrReplaceChild("couplerback", CubeListBuilder.create().texOffs(154, 113).addBox(-1.0F, -1.0F, -3.0F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(136, 47).addBox(-2.0F, -1.0F, -2.0F, 3.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(258, 145).addBox(-2.0F, -1.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
-		.texOffs(160, 113).addBox(-1.0F, -1.0F, 0.0F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(180, 258).addBox(1.0F, -1.0F, -2.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, 17.0F, -27.0F, 0.0F, 3.1416F, 0.0F));
-
-		PartDefinition bb_main = partdefinition.addOrReplaceChild("bb_main", CubeListBuilder.create().texOffs(42, 266).addBox(-1.0F, -22.0F, 23.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F))
-		.texOffs(248, 97).addBox(-1.0F, -22.0F, 23.0F, 2.0F, 0.0F, 3.0F, new CubeDeformation(0.0F))
-		.texOffs(146, 33).addBox(-1.0F, -22.0F, 25.0F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(146, 35).addBox(1.0F, -22.0F, 25.0F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
 
 		return LayerDefinition.create(meshdefinition, 512, 512);
 	}
@@ -536,18 +472,12 @@ public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 
 	@Override
 	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-		trackreferences.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		wheelandaxle.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		wheelandaxle2.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		wheelandaxle3.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		pistonleft.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		pistonright.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		boiler.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		body.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		cab.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		smokestack.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		couplerfront.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		couplerback.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		bb_main.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+		underside.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+		wholebody.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 	}
 }
