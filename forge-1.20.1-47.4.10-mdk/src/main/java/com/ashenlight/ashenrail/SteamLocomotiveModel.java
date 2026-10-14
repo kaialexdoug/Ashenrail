@@ -9,6 +9,7 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -468,6 +469,19 @@ public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 
 		this.pistonright.z = (float) pistonZOffset;
 		this.pistonright.y = pistonYOffsetInit + (float) pistonYOffset;
+
+		// swaying the train car
+		TrainCar trainCar = (TrainCar) entity;
+
+		float movement = (float) trainCar.getAbsSpeed();
+
+		// ageInTicks only holds partialTicks (0..1) here, so build a continuous time from the entity's tick count.
+		float time = trainCar.tickCount + partialTicks;
+		float swaySpeed = 0.15f;  // radians of sine phase per tick: 2*PI / 0.15 ≈ 42 ticks ≈ 2 seconds per full sway
+		float swayAmount = 0.01f; // radians: ≈ 1.7 degrees each way
+		float sway = Mth.sin(time * swaySpeed) * swayAmount * Math.min(movement / 0.2f, 1.0f);
+
+		this.wholebody.zRot = sway;
 	}
 
 	@Override
@@ -478,6 +492,17 @@ public class SteamLocomotiveModel<T extends Entity> extends EntityModel<T> {
 		pistonleft.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		pistonright.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		underside.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+
+		// Draw the body without the bulb (skipDraw only suppresses the bulb's own cubes).
+		headlightbulb.skipDraw = true;
 		wholebody.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+		headlightbulb.skipDraw = false;
+
+		// Draw the bulb on its own at full brightness, re-applying its ancestors' transforms.
+		poseStack.pushPose();
+		wholebody.translateAndRotate(poseStack);
+		headlight.translateAndRotate(poseStack);
+		headlightbulb.render(poseStack, vertexConsumer, LightTexture.FULL_BRIGHT, packedOverlay, red, green, blue, alpha);
+		poseStack.popPose();
 	}
 }
