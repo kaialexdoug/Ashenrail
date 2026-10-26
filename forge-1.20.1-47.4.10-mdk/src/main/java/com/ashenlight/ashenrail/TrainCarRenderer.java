@@ -1,5 +1,6 @@
 package com.ashenlight.ashenrail;
 
+import com.ashenlight.ashenrail.traincarvariants.OreCar;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -15,6 +16,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
     //official models
     private final SteamLocomotiveTest steamLocomotiveTest;
     private final SteamLocomotiveModel steamLocomotiveModel;
+    private final OreCarModel oreCarModel;
 
     public TrainCarRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -23,6 +25,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
         // official models
         this.steamLocomotiveTest = new SteamLocomotiveTest(context.bakeLayer(SteamLocomotiveTest.LAYER_LOCATION));
         this.steamLocomotiveModel = new SteamLocomotiveModel(context.bakeLayer(SteamLocomotiveModel.LAYER_LOCATION));
+        this.oreCarModel = new OreCarModel(context.bakeLayer(OreCarModel.LAYER_LOCATION));
     }
 
     @Override
@@ -36,6 +39,7 @@ public class TrainCarRenderer extends EntityRenderer<TrainCar> {
     private EntityModel<TrainCar> getModel(TrainCar trainCar) {
         return switch (trainCar.getModelId()) {
             case "steam_locomotive" -> this.steamLocomotiveModel;
+            case "ore_car" -> this.oreCarModel;
             default -> this.steamLocomotiveModel;
         };
     }

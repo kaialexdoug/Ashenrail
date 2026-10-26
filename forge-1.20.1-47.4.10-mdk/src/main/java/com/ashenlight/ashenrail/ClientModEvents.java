@@ -28,10 +28,12 @@ public class ClientModEvents {
         // official models
         event.registerLayerDefinition(SteamLocomotiveTest.LAYER_LOCATION, SteamLocomotiveTest::createBodyLayer);
         event.registerLayerDefinition(SteamLocomotiveModel.LAYER_LOCATION, SteamLocomotiveModel::createBodyLayer);
+        event.registerLayerDefinition(OreCarModel.LAYER_LOCATION, OreCarModel::createBodyLayer);
     }
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.STEAM_LOCOMOTIVE.get(), TrainCarRenderer::new);
+        event.registerEntityRenderer(ModEntities.ORE_CAR.get(), TrainCarRenderer::new);
     }
 }

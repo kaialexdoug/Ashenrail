@@ -1,5 +1,6 @@
 package com.ashenlight.ashenrail;
 
+import com.ashenlight.ashenrail.traincarvariants.OreCar;
 import com.ashenlight.ashenrail.traincarvariants.SteamLocomotive;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -14,5 +15,9 @@ public class ModEntities {
     public static final RegistryObject<EntityType<SteamLocomotive>> STEAM_LOCOMOTIVE = ENTITIES.register("steam_locomotive", () -> EntityType.Builder.<SteamLocomotive>of(SteamLocomotive::new, MobCategory.MISC)
             .sized(1.5f, 1.5f)
             .build("steam_locomotive"));
+
+    public static final RegistryObject<EntityType<OreCar>> ORE_CAR = ENTITIES.register("ore_car", () -> EntityType.Builder.<OreCar>of(OreCar::new, MobCategory.MISC)
+            .sized(1.5f, 1.5f)
+            .build("ore_car"));
 }
 

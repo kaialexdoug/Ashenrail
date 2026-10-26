@@ -72,6 +72,7 @@ public class AshenRail
 
     // official items (and block items)
     public static final RegistryObject<Item> STEAM_LOCOMOTIVE_ITEM = ITEMS.register("steam_locomotive", () -> new TrainCarItem(ModEntities.STEAM_LOCOMOTIVE, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> ORE_CAR_ITEM = ITEMS.register("ore_car", () -> new TrainCarItem(ModEntities.ORE_CAR, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> NARROW_TRACK_ITEM = ITEMS.register("narrow_track", () -> new BlockItem(NARROW_TRACK.get(), new Item.Properties()));
 
     // sounds
@@ -89,6 +90,7 @@ public class AshenRail
                 output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
                 // official
                 output.accept(STEAM_LOCOMOTIVE_ITEM.get());
+                output.accept(ORE_CAR_ITEM.get());
                 output.accept(NARROW_TRACK_ITEM.get());
             }).build());
 
