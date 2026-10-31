@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
-
 public class OreCarModel<T extends Entity> extends EntityModel<T> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
 	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation("modid", "orecar"), "main");
@@ -234,24 +233,24 @@ public class OreCarModel<T extends Entity> extends EntityModel<T> {
 
 		PartDefinition cube_r60 = innerrim4.addOrReplaceChild("cube_r60", CubeListBuilder.create().texOffs(76, 147).addBox(0.0F, -9.0F, -2.0F, 1.0F, 8.0F, 4.0F, new CubeDeformation(-0.02F)), PartPose.offsetAndRotation(0.0F, 3.4142F, 3.4142F, 0.7854F, 0.0F, 0.0F));
 
-		PartDefinition wholebody = partdefinition.addOrReplaceChild("wholebody", CubeListBuilder.create().texOffs(112, 0).addBox(3.2F, 11.0F, -7.0F, 12.0F, 2.0F, 14.0F, new CubeDeformation(0.0F))
-		.texOffs(82, 93).addBox(17.4F, -2.0F, -20.0F, 1.0F, 1.0F, 40.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 0).addBox(1.2F, 10.0F, -20.0F, 16.0F, 1.0F, 40.0F, new CubeDeformation(0.02F))
-		.texOffs(36, 134).addBox(2.2F, -2.0F, -20.0F, 14.0F, 12.0F, 1.0F, new CubeDeformation(-0.02F))
-		.texOffs(66, 134).addBox(2.2F, -2.0F, 19.0F, 14.0F, 12.0F, 1.0F, new CubeDeformation(-0.02F))
-		.texOffs(112, 36).addBox(0.2F, -2.0F, -20.0F, 18.0F, 1.0F, 1.0F, new CubeDeformation(0.01F))
-		.texOffs(112, 38).addBox(0.2F, -2.0F, 19.0F, 18.0F, 1.0F, 1.0F, new CubeDeformation(0.01F))
-		.texOffs(0, 93).addBox(0.0F, -2.0F, -20.0F, 1.0F, 1.0F, 40.0F, new CubeDeformation(0.0F)), PartPose.offset(-9.2F, -1.0F, 0.0F));
+		PartDefinition wholebody = partdefinition.addOrReplaceChild("wholebody", CubeListBuilder.create().texOffs(112, 0).addBox(-6.0F, 6.0F, -7.0F, 12.0F, 2.0F, 14.0F, new CubeDeformation(0.0F))
+		.texOffs(82, 93).addBox(8.2F, -7.0F, -20.0F, 1.0F, 1.0F, 40.0F, new CubeDeformation(0.0F))
+		.texOffs(0, 0).addBox(-8.0F, 5.0F, -20.0F, 16.0F, 1.0F, 40.0F, new CubeDeformation(0.02F))
+		.texOffs(36, 134).addBox(-7.0F, -7.0F, -20.0F, 14.0F, 12.0F, 1.0F, new CubeDeformation(-0.02F))
+		.texOffs(66, 134).addBox(-7.0F, -7.0F, 19.0F, 14.0F, 12.0F, 1.0F, new CubeDeformation(-0.02F))
+		.texOffs(112, 36).addBox(-9.0F, -7.0F, -20.0F, 18.0F, 1.0F, 1.0F, new CubeDeformation(0.01F))
+		.texOffs(112, 38).addBox(-9.0F, -7.0F, 19.0F, 18.0F, 1.0F, 1.0F, new CubeDeformation(0.01F))
+		.texOffs(0, 93).addBox(-9.2F, -7.0F, -20.0F, 1.0F, 1.0F, 40.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 4.0F, 0.0F));
 
 		PartDefinition cube_r61 = wholebody.addOrReplaceChild("cube_r61", CubeListBuilder.create().texOffs(164, 101).addBox(-1.0F, -7.0F, -1.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(164, 88).addBox(-1.0F, -7.0F, -40.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(16.2F, 5.2F, 20.0F, 0.0F, 0.0F, 0.0873F));
+		.texOffs(164, 88).addBox(-1.0F, -7.0F, -40.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(7.0F, 0.2F, 20.0F, 0.0F, 0.0F, 0.0873F));
 
 		PartDefinition cube_r62 = wholebody.addOrReplaceChild("cube_r62", CubeListBuilder.create().texOffs(164, 114).addBox(-1.0F, -7.0F, -1.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F))
-		.texOffs(0, 162).addBox(-1.0F, -7.0F, -40.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.2F, 5.2F, 20.0F, 0.0F, 0.0F, -0.0873F));
+		.texOffs(0, 162).addBox(-1.0F, -7.0F, -40.0F, 2.0F, 12.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-7.0F, 0.2F, 20.0F, 0.0F, 0.0F, -0.0873F));
 
-		PartDefinition cube_r63 = wholebody.addOrReplaceChild("cube_r63", CubeListBuilder.create().texOffs(82, 41).addBox(-1.0F, -12.0F, -20.0F, 1.0F, 12.0F, 40.0F, new CubeDeformation(-0.02F)), PartPose.offsetAndRotation(2.2F, 10.0F, 0.0F, 0.0F, 0.0F, -0.0873F));
+		PartDefinition cube_r63 = wholebody.addOrReplaceChild("cube_r63", CubeListBuilder.create().texOffs(82, 41).addBox(-1.0F, -12.0F, -20.0F, 1.0F, 12.0F, 40.0F, new CubeDeformation(-0.02F)), PartPose.offsetAndRotation(-7.0F, 5.0F, 0.0F, 0.0F, 0.0F, -0.0873F));
 
-		PartDefinition cube_r64 = wholebody.addOrReplaceChild("cube_r64", CubeListBuilder.create().texOffs(0, 41).addBox(0.0F, -12.0F, -20.0F, 1.0F, 12.0F, 40.0F, new CubeDeformation(-0.02F)), PartPose.offsetAndRotation(16.2F, 10.0F, 0.0F, 0.0F, 0.0F, 0.0873F));
+		PartDefinition cube_r64 = wholebody.addOrReplaceChild("cube_r64", CubeListBuilder.create().texOffs(0, 41).addBox(0.0F, -12.0F, -20.0F, 1.0F, 12.0F, 40.0F, new CubeDeformation(-0.02F)), PartPose.offsetAndRotation(7.0F, 5.0F, 0.0F, 0.0F, 0.0F, 0.0873F));
 
 		PartDefinition underside = partdefinition.addOrReplaceChild("underside", CubeListBuilder.create().texOffs(112, 16).addBox(-3.0F, 2.0F, -18.0F, 6.0F, 4.0F, 12.0F, new CubeDeformation(0.0F))
 		.texOffs(0, 134).addBox(-3.0F, 2.0F, 6.0F, 6.0F, 4.0F, 12.0F, new CubeDeformation(0.0F))

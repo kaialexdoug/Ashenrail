@@ -1,17 +1,13 @@
 package com.ashenlight.ashenrail.traincarvariants;
 
 import com.ashenlight.ashenrail.OreCarModel;
-import com.ashenlight.ashenrail.SteamLocomotiveModel;
 import com.ashenlight.ashenrail.TrainCar;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 import static com.ashenlight.ashenrail.AshenRail.ORE_CAR_ITEM;
-import static com.ashenlight.ashenrail.AshenRail.STEAM_LOCOMOTIVE_ITEM;
 
 public class OreCar extends TrainCar {
     public OreCar(EntityType<?> type, Level level) {
